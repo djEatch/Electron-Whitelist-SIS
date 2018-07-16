@@ -42,7 +42,7 @@ app.on("ready", function() {
   });
 
   win.once("ready-to-show", () => {
-    getMasterLBList();
+    //getMasterLBList();
     win.show();
   });
 
@@ -73,39 +73,39 @@ ipcMain.on('showServerWindow', function(e,data){
   });
 })
 
-function getMasterLBList() {
-  masterLBList = [];
-  var data = fs.readFileSync(envFile).toString();
+// function getMasterLBList() {
+//   masterLBList = [];
+//   var data = fs.readFileSync(envFile).toString();
 
-  let allTextLines = data.split(/\r\n|\n/);
-  let headers = allTextLines[0].split(",");
+//   let allTextLines = data.split(/\r\n|\n/);
+//   let headers = allTextLines[0].split(",");
 
-  for (let i = 1; i < allTextLines.length; i++) {
-    // split content based on comma
-    let data = allTextLines[i].split(",");
-    if (data.length == headers.length) {
-      let myEnv = new MasterLB(
-        data[0].replace(/['"]+/g, ""),
-        data[1].replace(/['"]+/g, ""),
-        data[2].replace(/['"]+/g, "")//,
-        //data[3].replace(/['"]+/g, ""),
-        //data[4].replace(/['"]+/g, "")
-      );
-      masterLBList.push(myEnv);
-    }
-  }
-  win.webContents.send("updateMasterLBList", masterLBList);
-}
+//   for (let i = 1; i < allTextLines.length; i++) {
+//     // split content based on comma
+//     let data = allTextLines[i].split(",");
+//     if (data.length == headers.length) {
+//       let myEnv = new MasterLB(
+//         data[0].replace(/['"]+/g, ""),
+//         data[1].replace(/['"]+/g, ""),
+//         data[2].replace(/['"]+/g, "")//,
+//         //data[3].replace(/['"]+/g, ""),
+//         //data[4].replace(/['"]+/g, "")
+//       );
+//       masterLBList.push(myEnv);
+//     }
+//   }
+//   win.webContents.send("updateMasterLBList", masterLBList);
+// }
 
-class MasterLB {
-  constructor(envname, hostname, endpoint, username, password) {
-    this.envname = envname;
-    this.hostname = hostname;
-    this.endpoint = endpoint;
-    this.username = username;
-    this.password = password;
-  }
-}
+// class MasterLB {
+//   constructor(envname, hostname, endpoint, username, password) {
+//     this.envname = envname;
+//     this.hostname = hostname;
+//     this.endpoint = endpoint;
+//     this.username = username;
+//     this.password = password;
+//   }
+// }
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
