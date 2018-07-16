@@ -5,6 +5,7 @@ var $ = require("jquery");
 
 let jmxUsers = [];
 let currentJMXuser;
+let sisResults;
 
 let sortOptions = { currentField: null, currentDir: -1 };
 
@@ -141,44 +142,9 @@ function humanEnvName(envText) {
   }
 }
 
-function gotSubServerList(data, _subLB) {
-  replyCount++;
-  try {
-    let subLBResponse = JSON.parse(data);
-    let subLBServerList;
-    if (subLBResponse.lbvserver[0].servicegroupmember) {
-      subLBServerList = subLBResponse.lbvserver[0].servicegroupmember;
-    } else {
-      console.log("No Servers On " + _subLB.name);
-      return;
-    }
-    for (subLBServer of subLBServerList) {
-      subLBServer.LBName = _subLB.name;
-      subLBServer.MLBState = subLBResponse.lbvserver[0].state;
-      lbServerList.push(subLBServer);
-    }
-    //console.log(lbServerList.length);
-  } catch (err) {
-    console.log("BAD Response from Sub LB");
-    console.log(_subLB);
-    console.log(err);
-  } finally {
-    if (requestCount == replyCount) {
-      processServers();
-    }
-  }
-}
 
-function getServerDetails(server) {
-  let url =
-    "http://" +
-    server.hostname +
-    ":" +
-    server.port +
-    server.endpoint +
-    "?include_version=true";
-  getRequest(updateServerResults, url, server);
-}
+
+
 
 function getSearchResults() {
   getRequest(
@@ -195,19 +161,64 @@ function gotSearchResults(resp, id) {
   let reply = parser.parseFromString(resp, "text/html");
   let inTable = reply.getElementById("MainTable");
 
+  sisResults = resultsToArray(inTable);
+  drawTableFromArray();
+  //drawTableFromTable(inTable);
+
+}
+
+function drawTableFromArray(){
+  let table = document.createElement("table");
+  table.classList = "table table-light table-hover";
+
+  // Create an empty <thead> element and add it to the table:
+  var header = table.createTHead();
+  header.classList = "thead-dark";
+
+  // Create an empty <tr> element and add it to the first position of <thead>:
+  var row = header.insertRow(0);
+
+  // Insert a new cell (<td>) at the first position of the "new" <tr> element:
+  console.log(Object.keys(sisResults[0]));
+  for(element of Object.keys(sisResults[0])){
+    let cell = row.insertCell();
+    cell.innerHTML = "<b>" + element + "</b>";
+  }
+
+  for(result of sisResults){
+    let row = table.insertRow();
+    console.log(result);
+    Object.keys(result).map(function(objectKey, index) {
+      var value = result[objectKey];
+      let cell = row.insertCell();
+      cell.innerHTML =value
+    });
+    row.className = "table-info";
+
+  }
+
+  let tableDiv = document.getElementById("TableDiv");
+  tableDiv.appendChild(table);
+}
+
+function drawTableFromTable(inTable){
   let outTable = document.createElement("TABLE");
+  outTable.id = "outTable";
   outTable.classList = "table table-light table-hover";
 
+  let headerSet = false;
   for (let inRow = 0; inRow < inTable.rows.length; inRow++) {
     //console.log(inRow, inTable.rows[inRow]);
     if (inTable.rows[inRow].cells.length > 1) {
       let outRow;
-      if (inRow == 0) {
+      if (!headerSet) {
         var header = outTable.createTHead();
         header.classList = "thead-dark";
         outRow = header.insertRow();
+        headerSet = true;
       } else {
         outRow = outTable.insertRow();
+        outRow.className = "table-info";
       }
       for (let inCol = 0; inCol < inTable.rows[inRow].cells.length; inCol++) {
         //console.log(inRow, inCol, inTable.rows[inRow].cells[inCol].textContent);
@@ -217,10 +228,37 @@ function gotSearchResults(resp, id) {
     }
   }
 
-
   let tableDiv = document.getElementById("TableDiv");
   tableDiv.appendChild(outTable);
 }
+
+function resultsToArray(inTable){
+
+  var json = [];
+  var headings = []
+
+  let headerSet = false;
+  for (let inRow = 0; inRow < inTable.rows.length; inRow++) {
+    if (inTable.rows[inRow].cells.length > 1) {
+      if (!headerSet) {
+        for (let inCol = 0; inCol < inTable.rows[inRow].cells.length; inCol++) {
+          headings.push(inTable.rows[inRow].cells[inCol].textContent)
+        }
+        headerSet = true;
+      } else {
+        let obj = {};
+        for (let inCol = 0; inCol < inTable.rows[inRow].cells.length; inCol++) {
+          obj[headings[inCol]] = inTable.rows[inRow].cells[inCol].textContent;
+        }
+        json.push(obj);
+      }
+    }
+  }
+
+
+  return json;
+}
+
 
 function getRequest(callback, url, id, username, password) {
   var xhr = new XMLHttpRequest();
@@ -289,46 +327,6 @@ function postRequest(callback, url, args, auth, action, server, timeout) {
       callback(xhr.responseText, action, xhr.status, server);
     }
   };
-}
-
-function updateServerResults(data, _server, timing) {
-  //format = {"status":{"available":true,"currentStatus":"UP_AND_RUNNING","label":"LEGX"}}
-  for (server of serverList) {
-    if (_server.hostname == server.hostname && _server.port == server.port) {
-      server.response = data;
-      server.responseTime = timing;
-      try {
-        server.ASMleg = JSON.parse(data).status.label.replace(/^Leg/, "");
-      } catch (e) {
-        //server.ASMleg = data;
-        server.ASMleg = NOLEG;
-      }
-      try {
-        server.status = JSON.parse(data).status.currentStatus;
-      } catch (e) {
-        server.status = null;
-      }
-      try {
-        server.availability = JSON.parse(data).status.available.toString();
-      } catch (e) {
-        server.availability = null;
-      }
-      try {
-        let deploys = JSON.parse(data).status.deployments;
-
-        if (!Array.isArray(deploys)) {
-          server.deployments = [];
-          server.deployments.push(deploys);
-        } else {
-          server.deployments = deploys;
-        }
-        //console.log(server.deployments);
-      } catch (e) {
-        server.deployments = [];
-      }
-    }
-  }
-  drawMultiTables();
 }
 
 function postedMaint(response, action, err, _server, timeout) {
@@ -411,11 +409,6 @@ function maintMode(action, server) {
   }
   //console.log("end of function");
 }
-
-// function whatDoesLBThinkOfThisServer(server) {
-//   console.log(serverList, envTypeList, fullSubLBList, lbServerList);
-//   console.log(server);
-// }
 
 class JMXUser {
   constructor(envName, uName, pWord) {
