@@ -1,0 +1,24 @@
+{
+  "name": "electron-whitelist-SIS",
+  "version": "0.0.1",
+  "description": "electron application to maintain offline whitelist",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "package": "electron-packager . OfflineWhitelist --overwrite --platform=win32 --arch=x64 --prune=true --out=release-builds --version-string.CompanyName=DJE --version-string.FileDescription=DJE --version-string.ProductName=\"Offline Whitelist Electron App\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "electron"
+  ],
+  "author": "DJEatch",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^2.0.0"
+  },
+  "dependencies": {
+    "bootstrap": "^4.1.1",
+    "jquery": "^3.3.1",
+    "popper.js": "^1.14.3"
+  }
+}
