@@ -206,9 +206,13 @@ function gotSearchResults(resp, id) {
   let parser = new DOMParser();
   let reply = parser.parseFromString(resp, "text/html");
   let inTable = reply.getElementById("MainTable");
-
+  if(inTable){
   sisResults = resultsToArray(inTable);
   drawTableFromArray();
+  } else {
+    let tableDiv = document.getElementById("TableDiv");
+    tableDiv.innerHTML = "";
+  }
   //drawTableFromTable(inTable);
 }
 
@@ -242,6 +246,7 @@ function drawTableFromArray() {
   }
 
   let tableDiv = document.getElementById("TableDiv");
+  tableDiv.innerHTML = "";
   tableDiv.appendChild(table);
 }
 
