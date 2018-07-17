@@ -43,6 +43,7 @@ app.on("ready", function() {
 
   win.once("ready-to-show", () => {
     //getMasterLBList();
+    win.webContents.send("initPageContent");
     win.show();
   });
 

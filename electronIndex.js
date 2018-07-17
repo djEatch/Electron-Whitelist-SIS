@@ -142,16 +142,62 @@ function humanEnvName(envText) {
   }
 }
 
+function buildQueryString() {
+
+  //let ChkProperty = document.all.item("ChkProperty")
+  //console.log(ChkProperty.checked);
+  let ChkDivision = document.all.item("ChkDivision");
+  let divisionValue = encodeURI(document.all.item("DivisionList").value.replace('&','amp;'))//."14-London";
+  let divisionString = `divisionIndex=5&divisionValue=${divisionValue}`;
+  let ChkRegion = document.all.item("ChkRegion");
+  let regionValue = encodeURI(document.all.item("RegionList").value.replace('&','amp;'))//"10-Airports";
+  let regionString = `regionIndex=6&regionValue=${regionValue}`;
+  let ChkArea = document.all.item("ChkArea");
+  let areaValue = encodeURI(document.all.item("CAList").value.replace('&','amp;'))//"311-Heathrow%20Airport";
+  let areaString = `areaIndex=7&areaValue=${areaValue}`;
+  let ChkFormat = document.all.item("ChkFormat");
+  let formatValue = encodeURI(document.all.item("FormatList").value.replace('&','amp;'))//"AIRPORT";
+  let formatString = `formatIndex=8&formatValue=${formatValue}`;
+  let ChkSAG = document.all.item("ChkSAG");
+  let sagValue = encodeURI(document.all.item("SAGList").value.replace('&','amp;'))//"A";
+  let sagString = `sagIndex=9&sagValue=${sagValue}`;
+
+  let outputString = "?"
+  if (ChkDivision.checked) {
+    console.log(outputString);
+    outputString += divisionString + "&"
+    console.log(outputString);
+  }
+  if (ChkRegion.checked) {
+    outputString += regionString + "&"
+  }
+  if (ChkArea.checked) {
+    outputString += areaString + "&"
+  }
+  if (ChkFormat.checked) {
+    outputString += formatString + "&"
+  }
+  if (ChkSAG.checked) {
+    outputString += sagString + "&"
+  }
 
 
 
+  // if(outputString.length > 1){
+  //   outputString = outputString.substr(0,outputString.length - 1)
+  // }
+  
+  console.log(outputString);
+  return outputString;
+}
 
 function getSearchResults() {
-  getRequest(
-    gotSearchResults,
-    "http://www.webapp2.int.boots.com/property/Reports/repProperty-AdvancedSearch.asp?propertyIndex=1&propertyValue=6&propertyFilterIndex=0&sagIndex=9&sagValue=A&",
-    "myID"
-  );
+  let baseURL =
+    "http://www.webapp2.int.boots.com/property/Reports/repProperty-AdvancedSearch.asp";
+  //let queryURL = "propertyIndex=1&propertyValue=6&propertyFilterIndex=0&sagIndex=9&sagValue=A"
+  let queryURL = buildQueryString();
+  console.log(baseURL + queryURL);
+  getRequest(gotSearchResults, baseURL + queryURL, "myID");
 }
 
 function gotSearchResults(resp, id) {
@@ -164,10 +210,9 @@ function gotSearchResults(resp, id) {
   sisResults = resultsToArray(inTable);
   drawTableFromArray();
   //drawTableFromTable(inTable);
-
 }
 
-function drawTableFromArray(){
+function drawTableFromArray() {
   let table = document.createElement("table");
   table.classList = "table table-light table-hover";
 
@@ -179,29 +224,28 @@ function drawTableFromArray(){
   var row = header.insertRow(0);
 
   // Insert a new cell (<td>) at the first position of the "new" <tr> element:
-  console.log(Object.keys(sisResults[0]));
-  for(element of Object.keys(sisResults[0])){
+  //console.log(Object.keys(sisResults[0]));
+  for (element of Object.keys(sisResults[0])) {
     let cell = row.insertCell();
     cell.innerHTML = "<b>" + element + "</b>";
   }
 
-  for(result of sisResults){
+  for (result of sisResults) {
     let row = table.insertRow();
-    console.log(result);
+    //console.log(result);
     Object.keys(result).map(function(objectKey, index) {
       var value = result[objectKey];
       let cell = row.insertCell();
-      cell.innerHTML =value
+      cell.innerHTML = value;
     });
     row.className = "table-info";
-
   }
 
   let tableDiv = document.getElementById("TableDiv");
   tableDiv.appendChild(table);
 }
 
-function drawTableFromTable(inTable){
+function drawTableFromTable(inTable) {
   let outTable = document.createElement("TABLE");
   outTable.id = "outTable";
   outTable.classList = "table table-light table-hover";
@@ -232,17 +276,16 @@ function drawTableFromTable(inTable){
   tableDiv.appendChild(outTable);
 }
 
-function resultsToArray(inTable){
-
+function resultsToArray(inTable) {
   var json = [];
-  var headings = []
+  var headings = [];
 
   let headerSet = false;
   for (let inRow = 0; inRow < inTable.rows.length; inRow++) {
     if (inTable.rows[inRow].cells.length > 1) {
       if (!headerSet) {
         for (let inCol = 0; inCol < inTable.rows[inRow].cells.length; inCol++) {
-          headings.push(inTable.rows[inRow].cells[inCol].textContent)
+          headings.push(inTable.rows[inRow].cells[inCol].textContent);
         }
         headerSet = true;
       } else {
@@ -255,10 +298,8 @@ function resultsToArray(inTable){
     }
   }
 
-
   return json;
 }
-
 
 function getRequest(callback, url, id, username, password) {
   var xhr = new XMLHttpRequest();
@@ -415,5 +456,43 @@ class JMXUser {
     this.environmentName = envName;
     this.userName = uName;
     this.passWord = pWord;
+  }
+}
+
+ipcRenderer.on("initPageContent", function() {
+  initPageContent();
+});
+
+function initPageContent() {
+  jsEnableControl(1, false, "SearchProperty");
+  //jsEnableControl(1, true, "PropertyFilterList");
+  jsEnableControl(5, false, "DivisionList");
+  jsEnableControl(6, false, "RegionList");
+  jsEnableControl(7, false, "CAList");
+  jsEnableControl(8, false, "FormatList");
+  jsEnableControl(9, false, "SAGList");
+}
+
+function jsEnableControl(itemNumber, visible, controlName) {
+  if (itemNumber > 0) {
+    if (visible) {
+      document.all.item(controlName).disabled = false;
+      document.all.item(controlName).focus();
+      if (controlName == "SearchProperty") {
+        document.all.PropertyFilterList.disabled = false;
+        document.all.PropertyFilterList.focus();
+      }
+    } else {
+      document.all.item(controlName).disabled = true;
+      if (controlName == "SearchProperty") {
+        document.all.PropertyFilterList.disabled = true;
+      }
+    }
+  } else {
+    document.all.item(controlName).disabled = true;
+    if (controlName == "SearchProperty") {
+      document.all.PropertyFilterList.disabled = true;
+    }
+
   }
 }
