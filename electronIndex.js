@@ -7,8 +7,10 @@ let jmxUsers = [];
 let currentJMXuser;
 let sisResults;
 let columbusList = [];
+let resilientList = [];
 
 let columbusCol = "Columbus";
+let resilientCol = "Resilient";
 
 let sortOptions = { currentField: null, currentDir: -1 };
 
@@ -17,6 +19,9 @@ const modalDiv = document.querySelector("#modalDiv");
 const fudgeButton = document.querySelector("#fudgeButton");
 fudgeButton.addEventListener("click", fudgeFunction);
 
+const searchButton = document.querySelector("#searchButton");
+searchButton.addEventListener("click", _ => {ipcRenderer.send("getFilterLists");});
+
 function fudgeFunction() {
   console.log("Clicked");
   //whatDoesLBThinkOfThisServer(serverList[6]);
@@ -24,11 +29,12 @@ function fudgeFunction() {
   //$('#collapseThree').collapse('hide')
   //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
   //ipcRenderer.send('showServerWindow',serverList);
-  ipcRenderer.send("getColumbusList");
+  //ipcRenderer.send("getFilterLists");
   //getSearchResults();
   // thing = document.querySelector("#modalJMXpara")
   // thing.innerHTML="TEXT FROM FUDGE"
   // $("#jmxLoginModalDiv").modal("show");
+  mapple();
 }
 
 function resetSort() {
@@ -76,8 +82,9 @@ function onlyUnique(value, index, self) {
   return self.indexOf(value) === index;
 }
 
-ipcRenderer.on("setColumbusList", function(e, _columbusList) {
+ipcRenderer.on("setFilterLists", function(e, _columbusList, _resilientList) {
   columbusList = _columbusList;
+  resilientList = _resilientList;
   getSearchResults();
 });
 
@@ -228,6 +235,24 @@ function gotSearchResults(resp, id) {
   //drawTableFromTable(inTable);
 }
 
+function gotDetailResults(resp, id){
+  let parser = new DOMParser();
+  let reply = parser.parseFromString(resp, "text/html");
+  let inTable = reply.getElementById("MainTable");
+  console.log (inTable);
+  let details = detailsToArray(inTable);
+  console.log(details)
+}
+
+function getStoreDetail(storeNum){
+  //let storeNum = parseInt(_storeNum,10);
+  console.log(storeNum);
+  let url = "http://www.webapp2.int.boots.com/property/Reports/repProperty-GeneralDetail.asp?PropID=" + storeNum;
+  getRequest(gotDetailResults, url, storeNum);
+}
+
+
+
 function drawTableFromArray() {
   let table = document.createElement("table");
   table.classList = "table table-light table-hover";
@@ -254,6 +279,13 @@ function drawTableFromArray() {
         var value = result[objectKey];
         let cell = row.insertCell();
         cell.innerHTML = value;
+        if(objectKey == "Store Number"){
+          cell.addEventListener('click',() => {
+            console.log('clicked', value);
+            getStoreDetail(value);
+            //ipcRenderer.send('popup',server);
+        })
+        }
       });
       row.className = "table-info";
     }
@@ -295,6 +327,43 @@ function drawTableFromTable(inTable) {
   tableDiv.appendChild(outTable);
 }
 
+function toFourDigits(_storeNum){
+  let storeNum = "0000" + _storeNum;
+  storeNum = storeNum.substr(-4);
+  return storeNum;
+}
+
+function detailsToArray(inTable) {
+
+  var json = [];
+  var headings = [];
+
+  let headerSet = false;
+
+  let subTables = inTable.rows[0].querySelectorAll("table");
+  console.log(subTables);
+
+  for (let inRow = 0; inRow < inTable.rows.length; inRow++) {
+    console.log(inTable.rows[0]);
+    // if (inTable.rows[inRow].cells.length > 1) {
+    //   if (!headerSet) {
+    //     for (let inCol = 0; inCol < inTable.rows[inRow].cells.length; inCol++) {
+    //       headings.push(inTable.rows[inRow].cells[inCol].textContent);
+    //     }
+    //     headerSet = true;
+    //   } else {
+    //     let obj = {};
+    //     for (let inCol = 0; inCol < inTable.rows[inRow].cells.length; inCol++) {
+    //       obj[headings[inCol]] = inTable.rows[inRow].cells[inCol].textContent;
+    //     }
+    //     json.push(obj);
+    //   }
+    // }
+  }
+  return json;
+}
+
+
 function resultsToArray(inTable) {
   var json = [];
   var headings = [];
@@ -312,12 +381,18 @@ function resultsToArray(inTable) {
         for (let inCol = 0; inCol < inTable.rows[inRow].cells.length; inCol++) {
           obj[headings[inCol]] = inTable.rows[inRow].cells[inCol].textContent;
           if (headings[inCol] == "Store Number") {
-            let storeNum = "0000" + obj[headings[inCol]];
-            storeNum = storeNum.substr(-4);
+            let storeNum = toFourDigits(obj[headings[inCol]]);
             obj[columbusCol] = "FALSE";
             for (site of columbusList) {
               if (site == storeNum) {
                 obj[columbusCol] = "TRUE";
+                break;
+              }
+            }
+            obj[resilientCol] = "FALSE";
+            for (site of resilientList) {
+              if (site == storeNum) {
+                obj[resilientCol] = "TRUE";
                 break;
               }
             }

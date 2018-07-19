@@ -8,7 +8,8 @@ const fs = require("fs");
 let win;
 
 let columbusFile = __dirname + "/ColumbusList.txt";
-//let masterLBList = [];
+let resilientFile = __dirname + "/ResilientList.txt";
+
 
 app.on("ready", function() {
   // Create the browser window.
@@ -16,12 +17,7 @@ app.on("ready", function() {
     show: false,
     width: 800,
     height: 600,
-    webSecurity: true// ,
-    // webPreferences: {
-    //   //nodeIntegration: false
-    //   //preload: path.join(__dirname, 'electronIndex.js'),
-    //   contextIsolation: true
-    // }
+    webSecurity: true
   });
 
   // and load the index.html of the app.
@@ -32,6 +28,7 @@ app.on("ready", function() {
       slashes: true
     })
   );
+  win.webContents.openDevTools()
 
   // Emitted when the window is closed.
   win.on("closed", () => {
@@ -74,14 +71,19 @@ ipcMain.on('showServerWindow', function(e,data){
   });
 })
 
-ipcMain.on('getColumbusList',getColumbusList);
+ipcMain.on('getFilterLists',getFilterLists);
 
-function getColumbusList() {
+function getFilterLists() {
+
   let columbusList = [];
-  var data = fs.readFileSync(columbusFile).toString();
+  let resilientList = [];
 
-  let allTextLines = data.split(/\r\n|\n/);
-  let headers = allTextLines[0].split(",");
+  let data,allTextLines, headers;
+  
+  data = fs.readFileSync(columbusFile).toString();
+
+  allTextLines = data.split(/\r\n|\n/);
+  headers = allTextLines[0].split(",");
 
   for (let i = 1; i < allTextLines.length; i++) {
     // split content based on comma
@@ -90,7 +92,21 @@ function getColumbusList() {
       columbusList.push(data[0].replace(/['"]+/g, ""));
     }
   }
-  win.webContents.send("setColumbusList", columbusList);
+
+  data = fs.readFileSync(resilientFile).toString();
+
+  allTextLines = data.split(/\r\n|\n/);
+  headers = allTextLines[0].split(",");
+
+  for (let i = 1; i < allTextLines.length; i++) {
+    // split content based on comma
+    let data = allTextLines[i].split(",");
+    if (data.length == headers.length) {
+      resilientList.push(data[0].replace(/['"]+/g, ""));
+    }
+  }
+
+  win.webContents.send("setFilterLists", columbusList, resilientList);
 }
 
 // class MasterLB {
