@@ -20,15 +20,12 @@
 
     <div>
         <nav class="navbar fixed-top navbar-light bg-light">
-
                 <div id="optionsDiv" class="col-md-12">
-                    <div class="row"></div>
-                        <table align="center" rules="none" cellPadding="2" cellSpacing="0" >
-                            <tr valign="top"  align="center">
-                                <td align="left"  nowrap  class="comment">
-                                    <input align="left" type="checkbox" name="ChkDivision" value="5" onclick="jsEnableControl(5,this.checked,'DivisionList');">Division
-                                </td>
-                                <td valign="left" align="left">	
+                            <div class="row">
+                                <div>
+                                    <input type="checkbox" name="ChkDivision" value="5" onclick="jsEnableControl(5,this.checked,'DivisionList');">Division
+                                </div>
+                                <div>	
                                     <select name="DivisionList" disabled="true">
                                         <option value="10-Scotland & Northern Ireland" >10-Scotland & Northern Ireland
                                         <option value="11-North" >11-North
@@ -37,12 +34,12 @@
                                         <option value="15-Republic Of Ireland" >15-Republic Of Ireland
                                         <option value="98-Unassigned" >98-Unassigned
                                     </select>
-                                </td>    
-                                <td align="left"  nowrap  class="comment" >
-                                    <input align="left" type="checkbox" name="ChkRegion" value="6" onclick="jsEnableControl(6,this.checked,'RegionList');">Region
-                                </td>
-                                <td valign="left" align="left">	
-                                    <select name="RegionList"  size="1" disabled="true">
+                                </div>    
+                                <div >
+                                    <input type="checkbox" name="ChkRegion" value="6" onclick="jsEnableControl(6,this.checked,'RegionList');">Region
+                                </div>
+                                <div >	
+                                    <select name="RegionList" disabled="true">
                                         <option value="10-Airports">10-Airports
                                         <option value="12-Central London and Greater Lon" >12-Central London and Greater Lon
                                         <option value="13-South West" >13-South West
@@ -61,11 +58,11 @@
                                         <option value="98-Unassigned" >98-Unassigned
                                         <option value="9-Eastern England" >9-Eastern England
                                     </select>
-                                </td>
-                                <td align="left"  nowrap  class="comment" >
+                                </div>
+                                <div>
                                     <input align="left" type="checkbox" name="ChkArea" value="7" onclick="jsEnableControl(7,this.checked,'CAList');">Area
-                                </td>
-                                <td valign="left" align="left" >	
+                                </div>
+                                <div valign="left" align="left" >	
                                     <select name="CAList"  size="1" disabled="true">
                                         <option value="98-Unassigned" >98-Unassigned
                                         <option value="100-North Ayrshire & Argyle" >100-North Ayrshire & Argyle
@@ -244,13 +241,11 @@
                                         <option value="920-Lisburn Armagh & South Down" >920-Lisburn Armagh & South Down
                                         <option value="921-Coleraine and Antrim" >921-Coleraine and Antrim
                                     </select>	
-                                </td>
-                            </tr>
-                            <tr valign="top"  align="center">
-                                <td align="left"  nowrap  class="comment">
+                                </div>
+                                <div >
                                     <input align="left" type="checkbox" name="ChkFormat" value="8" onclick="jsEnableControl(8,this.checked,'FormatList');">Format
-                                </td>
-                                <td valign="left" align="left" >	
+                                </div>
+                                <div >	
                                     <select name="FormatList"  size="1" disabled="true">
                                         <option value="AIRPORT" >AIRPORT
                                         <option value="FLAGSHIP" >FLAGSHIP
@@ -259,11 +254,11 @@
                                         <option value="NONE" >NONE
                                         <option value="OPTICIAN" >OPTICIAN
                                     </select>
-                                </td>
-                                <td align="left" colspan="1" nowrap  class="comment" >
+                                </div>
+                                <div>
                                     <input align="left" type="checkbox" name="ChkSAG" value="9" onclick="jsEnableControl(11,this.checked,'SAGList');">SAG
-                                </td>
-                                <td valign="left" align="left" >
+                                </div>
+                                <div >
                                     <select name="SAGList"  size="1" disabled="true">
                                         <option value="A" >A
                                         <option value="B" >B
@@ -272,11 +267,11 @@
                                         <option value="E" >E
                                         <option value="F" >F
                                     </select>
-                                </td>
-                                <td colspan=2>
+                                </div>
+                                <div >
                                         <button id="fudgeButton" class="btn btn-primary btn-block">FUDGE BUTTON</button>
-                                </td>
-                            </tr>
+                                </div>
+                            </div>
                         </table>
                     </div>
 
