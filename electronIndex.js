@@ -6,6 +6,9 @@ var $ = require("jquery");
 let jmxUsers = [];
 let currentJMXuser;
 let sisResults;
+let columbusList = [];
+
+let columbusCol = "Columbus";
 
 let sortOptions = { currentField: null, currentDir: -1 };
 
@@ -21,7 +24,8 @@ function fudgeFunction() {
   //$('#collapseThree').collapse('hide')
   //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
   //ipcRenderer.send('showServerWindow',serverList);
-  getSearchResults();
+  ipcRenderer.send("getColumbusList");
+  //getSearchResults();
   // thing = document.querySelector("#modalJMXpara")
   // thing.innerHTML="TEXT FROM FUDGE"
   // $("#jmxLoginModalDiv").modal("show");
@@ -72,10 +76,10 @@ function onlyUnique(value, index, self) {
   return self.indexOf(value) === index;
 }
 
-// ipcRenderer.on("updateMasterLBList", function(e, _masterLBList) {
-//   masterLBList = _masterLBList;
-//   setupEnvTypeList();
-// });
+ipcRenderer.on("setColumbusList", function(e, _columbusList) {
+  columbusList = _columbusList;
+  getSearchResults();
+});
 
 function jmxLogin(e, u, p) {
   let envName = e.getAttribute("data-jmxUserEnvName");
@@ -143,50 +147,57 @@ function humanEnvName(envText) {
 }
 
 function buildQueryString() {
-
   //let ChkProperty = document.all.item("ChkProperty")
   //console.log(ChkProperty.checked);
   let ChkDivision = document.all.item("ChkDivision");
-  let divisionValue = encodeURI(document.all.item("DivisionList").value.replace('&','amp;'))//."14-London";
+  let divisionValue = encodeURI(
+    document.all.item("DivisionList").value.replace("&", "amp;")
+  ); //."14-London";
   let divisionString = `divisionIndex=5&divisionValue=${divisionValue}`;
   let ChkRegion = document.all.item("ChkRegion");
-  let regionValue = encodeURI(document.all.item("RegionList").value.replace('&','amp;'))//"10-Airports";
+  let regionValue = encodeURI(
+    document.all.item("RegionList").value.replace("&", "amp;")
+  ); //"10-Airports";
   let regionString = `regionIndex=6&regionValue=${regionValue}`;
   let ChkArea = document.all.item("ChkArea");
-  let areaValue = encodeURI(document.all.item("CAList").value.replace('&','amp;'))//"311-Heathrow%20Airport";
+  let areaValue = encodeURI(
+    document.all.item("CAList").value.replace("&", "amp;")
+  ); //"311-Heathrow%20Airport";
   let areaString = `areaIndex=7&areaValue=${areaValue}`;
   let ChkFormat = document.all.item("ChkFormat");
-  let formatValue = encodeURI(document.all.item("FormatList").value.replace('&','amp;'))//"AIRPORT";
+  let formatValue = encodeURI(
+    document.all.item("FormatList").value.replace("&", "amp;")
+  ); //"AIRPORT";
   let formatString = `formatIndex=8&formatValue=${formatValue}`;
   let ChkSAG = document.all.item("ChkSAG");
-  let sagValue = encodeURI(document.all.item("SAGList").value.replace('&','amp;'))//"A";
+  let sagValue = encodeURI(
+    document.all.item("SAGList").value.replace("&", "amp;")
+  ); //"A";
   let sagString = `sagIndex=9&sagValue=${sagValue}`;
 
-  let outputString = "?"
+  let outputString = "?";
   if (ChkDivision.checked) {
     console.log(outputString);
-    outputString += divisionString + "&"
+    outputString += divisionString + "&";
     console.log(outputString);
   }
   if (ChkRegion.checked) {
-    outputString += regionString + "&"
+    outputString += regionString + "&";
   }
   if (ChkArea.checked) {
-    outputString += areaString + "&"
+    outputString += areaString + "&";
   }
   if (ChkFormat.checked) {
-    outputString += formatString + "&"
+    outputString += formatString + "&";
   }
   if (ChkSAG.checked) {
-    outputString += sagString + "&"
+    outputString += sagString + "&";
   }
-
-
 
   // if(outputString.length > 1){
   //   outputString = outputString.substr(0,outputString.length - 1)
   // }
-  
+
   console.log(outputString);
   return outputString;
 }
@@ -197,6 +208,7 @@ function getSearchResults() {
   //let queryURL = "propertyIndex=1&propertyValue=6&propertyFilterIndex=0&sagIndex=9&sagValue=A"
   let queryURL = buildQueryString();
   console.log(baseURL + queryURL);
+  console.log(columbusList);
   getRequest(gotSearchResults, baseURL + queryURL, "myID");
 }
 
@@ -206,9 +218,9 @@ function gotSearchResults(resp, id) {
   let parser = new DOMParser();
   let reply = parser.parseFromString(resp, "text/html");
   let inTable = reply.getElementById("MainTable");
-  if(inTable){
-  sisResults = resultsToArray(inTable);
-  drawTableFromArray();
+  if (inTable) {
+    sisResults = resultsToArray(inTable);
+    drawTableFromArray();
   } else {
     let tableDiv = document.getElementById("TableDiv");
     tableDiv.innerHTML = "";
@@ -235,14 +247,16 @@ function drawTableFromArray() {
   }
 
   for (result of sisResults) {
-    let row = table.insertRow();
-    //console.log(result);
-    Object.keys(result).map(function(objectKey, index) {
-      var value = result[objectKey];
-      let cell = row.insertCell();
-      cell.innerHTML = value;
-    });
-    row.className = "table-info";
+    if (result[columbusCol] == "TRUE") {
+      let row = table.insertRow();
+      //console.log(result);
+      Object.keys(result).map(function(objectKey, index) {
+        var value = result[objectKey];
+        let cell = row.insertCell();
+        cell.innerHTML = value;
+      });
+      row.className = "table-info";
+    }
   }
 
   let tableDiv = document.getElementById("TableDiv");
@@ -297,12 +311,22 @@ function resultsToArray(inTable) {
         let obj = {};
         for (let inCol = 0; inCol < inTable.rows[inRow].cells.length; inCol++) {
           obj[headings[inCol]] = inTable.rows[inRow].cells[inCol].textContent;
+          if (headings[inCol] == "Store Number") {
+            let storeNum = "0000" + obj[headings[inCol]];
+            storeNum = storeNum.substr(-4);
+            obj[columbusCol] = "FALSE";
+            for (site of columbusList) {
+              if (site == storeNum) {
+                obj[columbusCol] = "TRUE";
+                break;
+              }
+            }
+          }
         }
         json.push(obj);
       }
     }
   }
-
   return json;
 }
 
@@ -498,6 +522,5 @@ function jsEnableControl(itemNumber, visible, controlName) {
     if (controlName == "SearchProperty") {
       document.all.PropertyFilterList.disabled = true;
     }
-
   }
 }

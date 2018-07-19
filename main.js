@@ -7,8 +7,8 @@ const fs = require("fs");
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
 
-let envFile = __dirname + "/EnvTypeList.txt";
-let masterLBList = [];
+let columbusFile = __dirname + "/ColumbusList.txt";
+//let masterLBList = [];
 
 app.on("ready", function() {
   // Create the browser window.
@@ -74,29 +74,24 @@ ipcMain.on('showServerWindow', function(e,data){
   });
 })
 
-// function getMasterLBList() {
-//   masterLBList = [];
-//   var data = fs.readFileSync(envFile).toString();
+ipcMain.on('getColumbusList',getColumbusList);
 
-//   let allTextLines = data.split(/\r\n|\n/);
-//   let headers = allTextLines[0].split(",");
+function getColumbusList() {
+  let columbusList = [];
+  var data = fs.readFileSync(columbusFile).toString();
 
-//   for (let i = 1; i < allTextLines.length; i++) {
-//     // split content based on comma
-//     let data = allTextLines[i].split(",");
-//     if (data.length == headers.length) {
-//       let myEnv = new MasterLB(
-//         data[0].replace(/['"]+/g, ""),
-//         data[1].replace(/['"]+/g, ""),
-//         data[2].replace(/['"]+/g, "")//,
-//         //data[3].replace(/['"]+/g, ""),
-//         //data[4].replace(/['"]+/g, "")
-//       );
-//       masterLBList.push(myEnv);
-//     }
-//   }
-//   win.webContents.send("updateMasterLBList", masterLBList);
-// }
+  let allTextLines = data.split(/\r\n|\n/);
+  let headers = allTextLines[0].split(",");
+
+  for (let i = 1; i < allTextLines.length; i++) {
+    // split content based on comma
+    let data = allTextLines[i].split(",");
+    if (data.length == headers.length) {
+      columbusList.push(data[0].replace(/['"]+/g, ""));
+    }
+  }
+  win.webContents.send("setColumbusList", columbusList);
+}
 
 // class MasterLB {
 //   constructor(envname, hostname, endpoint, username, password) {
