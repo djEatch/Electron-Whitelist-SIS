@@ -2,6 +2,17 @@ const electron = require("electron");
 const { ipcRenderer } = electron;
 const bootstrap = require("bootstrap"); //required even though not called!!
 var $ = require("jquery");
+const sql = require('mssql');
+
+const sqlConfig = {
+  user: "PropertyRO",
+  password: "my%Bait2018",
+  server: "ukc1centwd\\live1",
+  database: "Property",
+  options: {
+    encrypt: false // Use this if you're on Windows Azure
+  }
+};
 
 let jmxUsers = [];
 let currentJMXuser;
@@ -20,7 +31,9 @@ const fudgeButton = document.querySelector("#fudgeButton");
 fudgeButton.addEventListener("click", fudgeFunction);
 
 const searchButton = document.querySelector("#searchButton");
-searchButton.addEventListener("click", _ => {ipcRenderer.send("getFilterLists");});
+searchButton.addEventListener("click", _ => {
+  ipcRenderer.send("getFilterLists");
+});
 
 function fudgeFunction() {
   console.log("Clicked");
@@ -34,7 +47,75 @@ function fudgeFunction() {
   // thing = document.querySelector("#modalJMXpara")
   // thing.innerHTML="TEXT FROM FUDGE"
   // $("#jmxLoginModalDiv").modal("show");
-  mapple();
+  sqlConnect();
+}
+
+function getSQLMasterData(){
+
+
+
+}
+
+function sqlConnect() {
+  //const sql = require('mssql')
+  //  const sqlConfig = {
+  //   user: "PropertyRO",
+  //   password: "my%Bait2018",
+  //   server: "ukc1centwd\\live1",
+  //   database: "Property",
+  //   options: {
+  //     encrypt: false // Use this if you're on Windows Azure
+  //   }
+  // };
+  console.log(sqlConfig);
+
+  query();
+
+  async function query(){
+  console.log("in async");
+    try {
+        const pool = await sql.connect(sqlConfig)
+        console.log(pool);
+        let result = await sql.query`SELECT TOP 100 * from dbo.t_division`
+        console.log(result);
+        console.dir(result)
+    } catch (err) {
+        console.log(err);
+    }
+  }
+
+//   SELECT TOP 100 *
+// from dbo.t_property
+// where property_type <> 'Closed'
+
+// SELECT TOP 100 *
+// from dbo.t_division
+
+// SELECT TOP 100 *
+// from dbo.t_region
+
+// SELECT TOP 100 *
+// from dbo.t_area
+
+
+  // const mssql = require("mssql");
+  // const config = {
+  //   user: "PropertyRO",
+  //   password: "my%Bait2018",
+  //   server: "ukc1centwd\\live1",
+  //   database: "Property"
+  // };
+  // var addConn = async function() {
+  //   try {
+  //     let pool = await mssql.connect(config);
+  //     let results = await pool.request();
+  //     await pool.request().query("SELECT TOP 100 * from dbo.t_division;");
+  //     //.query('insert into dbo.nirvana (FirstName, LastName, AmountDuePrevious, AmountDueCurrent) values ('+lastName+' , '+firstName+' , 0, 0);');
+  //     console.log(results);
+  //   } catch (err) {
+  //     console.log(err);
+  //   }
+  // };
 }
 
 function resetSort() {
@@ -235,23 +316,23 @@ function gotSearchResults(resp, id) {
   //drawTableFromTable(inTable);
 }
 
-function gotDetailResults(resp, id){
+function gotDetailResults(resp, id) {
   let parser = new DOMParser();
   let reply = parser.parseFromString(resp, "text/html");
   let inTable = reply.getElementById("MainTable");
-  console.log (inTable);
+  console.log(inTable);
   let details = detailsToArray(inTable);
-  console.log(details)
+  console.log(details);
 }
 
-function getStoreDetail(storeNum){
+function getStoreDetail(storeNum) {
   //let storeNum = parseInt(_storeNum,10);
   console.log(storeNum);
-  let url = "http://www.webapp2.int.boots.com/property/Reports/repProperty-GeneralDetail.asp?PropID=" + storeNum;
+  let url =
+    "http://www.webapp2.int.boots.com/property/Reports/repProperty-GeneralDetail.asp?PropID=" +
+    storeNum;
   getRequest(gotDetailResults, url, storeNum);
 }
-
-
 
 function drawTableFromArray() {
   let table = document.createElement("table");
@@ -279,12 +360,12 @@ function drawTableFromArray() {
         var value = result[objectKey];
         let cell = row.insertCell();
         cell.innerHTML = value;
-        if(objectKey == "Store Number"){
-          cell.addEventListener('click',() => {
-            console.log('clicked', value);
+        if (objectKey == "Store Number") {
+          cell.addEventListener("click", () => {
+            console.log("clicked", value);
             getStoreDetail(value);
             //ipcRenderer.send('popup',server);
-        })
+          });
         }
       });
       row.className = "table-info";
@@ -327,14 +408,13 @@ function drawTableFromTable(inTable) {
   tableDiv.appendChild(outTable);
 }
 
-function toFourDigits(_storeNum){
+function toFourDigits(_storeNum) {
   let storeNum = "0000" + _storeNum;
   storeNum = storeNum.substr(-4);
   return storeNum;
 }
 
 function detailsToArray(inTable) {
-
   var json = [];
   var headings = [];
 
@@ -362,7 +442,6 @@ function detailsToArray(inTable) {
   }
   return json;
 }
-
 
 function resultsToArray(inTable) {
   var json = [];
