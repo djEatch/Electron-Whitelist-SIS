@@ -2,7 +2,7 @@ const electron = require("electron");
 const { ipcRenderer } = electron;
 const bootstrap = require("bootstrap"); //required even though not called!!
 var $ = require("jquery");
-const sql = require('mssql');
+const sql = require("mssql");
 
 const sqlConfig = {
   user: "PropertyRO",
@@ -35,6 +35,16 @@ searchButton.addEventListener("click", _ => {
   ipcRenderer.send("getFilterLists");
 });
 
+let divisionListData;
+let regionListData;
+let areaListData;
+let sagListData;
+
+getMasterData();
+console.log(divisionListData);
+console.log(regionListData);
+console.log(areaListData);
+
 function fudgeFunction() {
   console.log("Clicked");
   //whatDoesLBThinkOfThisServer(serverList[6]);
@@ -50,72 +60,71 @@ function fudgeFunction() {
   sqlConnect();
 }
 
-function getSQLMasterData(){
-
-
-
-}
-
-function sqlConnect() {
-  //const sql = require('mssql')
-  //  const sqlConfig = {
-  //   user: "PropertyRO",
-  //   password: "my%Bait2018",
-  //   server: "ukc1centwd\\live1",
-  //   database: "Property",
-  //   options: {
-  //     encrypt: false // Use this if you're on Windows Azure
-  //   }
-  // };
-  console.log(sqlConfig);
-
-  query();
-
-  async function query(){
-  console.log("in async");
-    try {
-        const pool = await sql.connect(sqlConfig)
-        console.log(pool);
-        let result = await sql.query`SELECT TOP 100 * from dbo.t_division`
-        console.log(result);
-        console.dir(result)
-    } catch (err) {
-        console.log(err);
-    }
+async function getMasterData() {
+  try {
+    let pool = await sql.connect(sqlConfig);
+    masterData = await sql.query`SELECT top 100  * from dbo.t_division;SELECT TOP 100 * from dbo.t_region;SELECT TOP 100 * from dbo.t_area;select top 100 * from dbo.t_SAG;`;
+  } catch (err) {
+    console.log(err);
   }
 
-//   SELECT TOP 100 *
-// from dbo.t_property
-// where property_type <> 'Closed'
+  let divisionDropDown = document.all.item("DivisionList");
+  let regionDropDown = document.all.item("RegionList");
+  let areaDropDown = document.all.item("CAList");
+  let sagDropDown = document.all.item("SAGList");
 
-// SELECT TOP 100 *
-// from dbo.t_division
+  divisionListData = masterData.recordsets[0];
+  regionListData = masterData.recordsets[1];
+  areaListData = masterData.recordsets[2];
+  sagListData = masterData.recordsets[3];
+  
 
-// SELECT TOP 100 *
-// from dbo.t_region
+  for (record of divisionListData) {
+    let option = document.createElement("option");
+    option.value = record["Division_number"];
+    option.text = record["Division_number"] + "-" + record["Division_Name"];
+    divisionDropDown.add(option);
+  }
 
-// SELECT TOP 100 *
-// from dbo.t_area
+  for (record of regionListData) {
+    let option = document.createElement("option");
+    option.value = record["Region_number"];
+    option.text = record["Region_number"] + "-" + record["Region_name"];
+    regionDropDown.add(option);
+  }
 
+  for (record of areaListData) {
+    let option = document.createElement("option");
+    option.value = record["Area_number"];
+    option.text = record["Area_number"] + "-" + record["Area_name"];
+    areaDropDown.add(option);
+  }
+  let sagShortList = [];
+  for (record of sagListData) {
+    sagShortList.push(record["SAG"].substr(0,1));
+  }
+  sagShortList = sagShortList.filter( onlyUnique );
+  for (record of sagShortList) {
+    let option = document.createElement("option");
+    option.value = record;
+    option.text = record;
+    sagDropDown.add(option);
+  }
+  console.log(divisionListData);
+  console.log(regionListData);
+  console.log(areaListData);
+  console.log(sagListData);
+}
 
-  // const mssql = require("mssql");
-  // const config = {
-  //   user: "PropertyRO",
-  //   password: "my%Bait2018",
-  //   server: "ukc1centwd\\live1",
-  //   database: "Property"
-  // };
-  // var addConn = async function() {
-  //   try {
-  //     let pool = await mssql.connect(config);
-  //     let results = await pool.request();
-  //     await pool.request().query("SELECT TOP 100 * from dbo.t_division;");
-  //     //.query('insert into dbo.nirvana (FirstName, LastName, AmountDuePrevious, AmountDueCurrent) values ('+lastName+' , '+firstName+' , 0, 0);');
-  //     console.log(results);
-  //   } catch (err) {
-  //     console.log(err);
-  //   }
-  // };
+async function sqlQuery(queryString) {
+  try {
+    let pool = await sql.connect(sqlConfig);
+    let result = await sql.query`${queryString}`; //`SELECT TOP 100 * from dbo.t_division`
+    await sql.close();
+    return result.recordset;
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 function resetSort() {
@@ -647,7 +656,7 @@ ipcRenderer.on("initPageContent", function() {
 });
 
 function initPageContent() {
-  jsEnableControl(1, false, "SearchProperty");
+  //jsEnableControl(1, false, "SearchProperty");
   //jsEnableControl(1, true, "PropertyFilterList");
   jsEnableControl(5, false, "DivisionList");
   jsEnableControl(6, false, "RegionList");
