@@ -39,6 +39,7 @@ let divisionListData;
 let regionListData;
 let areaListData;
 let sagListData;
+let formatListData;
 
 getMasterData();
 console.log(divisionListData);
@@ -57,13 +58,13 @@ function fudgeFunction() {
   // thing = document.querySelector("#modalJMXpara")
   // thing.innerHTML="TEXT FROM FUDGE"
   // $("#jmxLoginModalDiv").modal("show");
-  sqlConnect();
+  // sqlConnect();
 }
 
 async function getMasterData() {
   try {
     let pool = await sql.connect(sqlConfig);
-    masterData = await sql.query`SELECT top 100  * from dbo.t_division;SELECT TOP 100 * from dbo.t_region;SELECT TOP 100 * from dbo.t_area;select top 100 * from dbo.t_SAG;`;
+    masterData = await sql.query`SELECT top 100  * from dbo.t_division;SELECT TOP 100 * from dbo.t_region;SELECT TOP 100 * from dbo.t_area;select top 100 * from dbo.t_SAG;SELECT distinct [format] FROM dbo.T_PROPERTY;`;
   } catch (err) {
     console.log(err);
   }
@@ -72,11 +73,13 @@ async function getMasterData() {
   let regionDropDown = document.all.item("RegionList");
   let areaDropDown = document.all.item("CAList");
   let sagDropDown = document.all.item("SAGList");
+  let formatDropDown = document.all.item("FormatList");
 
   divisionListData = masterData.recordsets[0];
   regionListData = masterData.recordsets[1];
   areaListData = masterData.recordsets[2];
   sagListData = masterData.recordsets[3];
+  formatListData = masterData.recordsets[4];
   
 
   for (record of divisionListData) {
@@ -99,6 +102,7 @@ async function getMasterData() {
     option.text = record["Area_number"] + "-" + record["Area_name"];
     areaDropDown.add(option);
   }
+
   let sagShortList = [];
   for (record of sagListData) {
     sagShortList.push(record["SAG"].substr(0,1));
@@ -110,10 +114,19 @@ async function getMasterData() {
     option.text = record;
     sagDropDown.add(option);
   }
+
+  for (record of formatListData) {
+    let option = document.createElement("option");
+    option.value = record["format"];
+    option.text = record["format"];
+    formatDropDown.add(option);
+  }
+
   console.log(divisionListData);
   console.log(regionListData);
   console.log(areaListData);
   console.log(sagListData);
+  console.log(formatListData);
 }
 
 async function sqlQuery(queryString) {
@@ -175,8 +188,23 @@ function onlyUnique(value, index, self) {
 ipcRenderer.on("setFilterLists", function(e, _columbusList, _resilientList) {
   columbusList = _columbusList;
   resilientList = _resilientList;
-  getSearchResults();
+  //getSearchResults();
+  let sqlQuery = buildSQLQueryString()
+  let sqlResults = getSQLResults(sqlQuery);
+  // drawTableFromArray(sqlResults);
 });
+
+async function getSQLResults(sqlQuery){
+  let results
+  try {
+    //let pool = await sql.connect(sqlConfig);
+    results = await sql.query(sqlQuery);
+  } catch (err) {
+    console.log(err);
+    results = [];
+  }
+  return results;
+}
 
 function jmxLogin(e, u, p) {
   let envName = e.getAttribute("data-jmxUserEnvName");
@@ -241,6 +269,12 @@ function humanEnvName(envText) {
     default:
       return envText;
   }
+}
+
+function buildSQLQueryString(){
+  //ipcRenderer.send("getFilterLists");
+  let queryString = 'SELECT top 10 * from [dbo].[T_PROPERTY];';
+  return queryString
 }
 
 function buildQueryString() {
@@ -317,7 +351,7 @@ function gotSearchResults(resp, id) {
   let inTable = reply.getElementById("MainTable");
   if (inTable) {
     sisResults = resultsToArray(inTable);
-    drawTableFromArray();
+    drawTableFromArray(sisResults);
   } else {
     let tableDiv = document.getElementById("TableDiv");
     tableDiv.innerHTML = "";
@@ -343,7 +377,7 @@ function getStoreDetail(storeNum) {
   getRequest(gotDetailResults, url, storeNum);
 }
 
-function drawTableFromArray() {
+function drawTableFromArray(resultSet) {
   let table = document.createElement("table");
   table.classList = "table table-light table-hover";
 
@@ -356,12 +390,12 @@ function drawTableFromArray() {
 
   // Insert a new cell (<td>) at the first position of the "new" <tr> element:
   //console.log(Object.keys(sisResults[0]));
-  for (element of Object.keys(sisResults[0])) {
+  for (element of Object.keys(resultSet[0])) {
     let cell = row.insertCell();
     cell.innerHTML = "<b>" + element + "</b>";
   }
 
-  for (result of sisResults) {
+  for (result of resultSet) {
     if (result[columbusCol] == "TRUE") {
       let row = table.insertRow();
       //console.log(result);
@@ -687,3 +721,20 @@ function jsEnableControl(itemNumber, visible, controlName) {
     }
   }
 }
+
+
+/*
+
+SELECT top 10 * 
+  FROM [Property].[dbo].[T_PROPERTY];
+
+  select top 100 * from t_store_attribute where attribute_id in (37,38,39,40);
+
+Attribute_ID	Attribute_Name	Related_object	Attribute_format
+37	Grid Reference Easting	T_PROPERTY	Number
+38	Grid Reference Northing	T_PROPERTY	Number
+39	Grid Reference Latitude	T_PROPERTY	Text
+40	Grid Reference Longitude	T_PROPERTY	Text
+
+
+*/
