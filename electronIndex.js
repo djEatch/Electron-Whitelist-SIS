@@ -64,7 +64,8 @@ function fudgeFunction() {
 async function getMasterData() {
   try {
     let pool = await sql.connect(sqlConfig);
-    masterData = await sql.query`SELECT top 100  * from dbo.t_division;SELECT TOP 100 * from dbo.t_region;SELECT TOP 100 * from dbo.t_area;select top 100 * from dbo.t_SAG;SELECT distinct [format] FROM dbo.T_PROPERTY;`;
+    masterData = await sql.query`SELECT top 100  * from dbo.t_division;SELECT TOP 100 * from dbo.t_region;SELECT TOP 100 * from dbo.t_area;select top 100 * from dbo.t_SAG;SELECT distinct [trading_format] FROM dbo.T_PROPERTY;`;
+    sql.close();
   } catch (err) {
     console.log(err);
   }
@@ -117,8 +118,8 @@ async function getMasterData() {
 
   for (record of formatListData) {
     let option = document.createElement("option");
-    option.value = record["format"];
-    option.text = record["format"];
+    option.value = record["trading_format"];
+    option.text = record["trading_format"];
     formatDropDown.add(option);
   }
 
@@ -190,15 +191,20 @@ ipcRenderer.on("setFilterLists", function(e, _columbusList, _resilientList) {
   resilientList = _resilientList;
   //getSearchResults();
   let sqlQuery = buildSQLQueryString()
+
   let sqlResults = getSQLResults(sqlQuery);
+  console.log(sqlResults);
   // drawTableFromArray(sqlResults);
 });
 
 async function getSQLResults(sqlQuery){
   let results
   try {
-    //let pool = await sql.connect(sqlConfig);
-    results = await sql.query(sqlQuery);
+    let pool = await sql.connect(sqlConfig);
+    console.log(`${sqlQuery}`);
+    results = await sql.query`SELECT * FROM [Property].[dbo].[T_PROPERTY] p left join [Property].[dbo].[T_SAG] s on p.sq_metres >= s.lower_limit and  p.sq_metres <= s.upper_limit ${sqlQuery} ;`;
+    sql.close();
+    console.log(results);
   } catch (err) {
     console.log(err);
     results = [];
@@ -273,7 +279,49 @@ function humanEnvName(envText) {
 
 function buildSQLQueryString(){
   //ipcRenderer.send("getFilterLists");
-  let queryString = 'SELECT top 10 * from [dbo].[T_PROPERTY];';
+  let queryString = '';
+  
+  let ChkDivision = document.all.item("ChkDivision");
+  let ChkRegion = document.all.item("ChkRegion");
+  let ChkArea = document.all.item("ChkArea");
+  let ChkFormat = document.all.item("ChkFormat");
+  let ChkSAG = document.all.item("ChkSAG");
+
+  if (ChkDivision.checked||ChkRegion.checked||ChkArea.checked||ChkFormat.checked||ChkSAG.checked) {
+    queryString += " WHERE "
+  }
+
+  if(ChkDivision.checked){
+    let divisionValue = document.all.item("DivisionList").value; //10 //."14-London";
+    if(queryString.substr(-7) != " WHERE ") {queryString += " AND "}
+    queryString += ` DIVISION_ID = ${divisionValue} `
+  }
+
+  if(ChkRegion.checked){
+  let regionValue = document.all.item("RegionList").value; //"10-Airports";
+  if(queryString.substr(-7) != " WHERE ") {queryString += " AND "}
+    queryString += ` REGION_ID = ${regionValue} `
+  }
+ 
+  if(ChkArea.checked){
+    let areaValue = document.all.item("CAList").value; //"311-Heathrow%20Airport";
+    if(queryString.substr(-7) != " WHERE ") {queryString += " AND "}
+    queryString += ` CUSTOMER_AREA_ID = ${areaValue} `
+  }
+  
+  if(ChkFormat.checked){
+    let formatValue = document.all.item("FormatList").value;
+    if(queryString.substr(-7) != " WHERE ") {queryString += " AND "}
+    queryString += ` TRADING_FORMAT = ${formatValue} `
+  }
+  
+  if (ChkSAG.checked){
+    let sagValue = document.all.item("SAGList").value;
+    if(queryString.substr(-7) != " WHERE ") {queryString += " AND "}
+    queryString += ` left(SAG,1) = ${sagValue} `
+  }
+  
+  console.log(queryString);
   return queryString
 }
 
