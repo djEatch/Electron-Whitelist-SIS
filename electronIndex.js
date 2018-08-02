@@ -279,6 +279,9 @@ function drawTableFromSQL() {
 
   // Insert a new cell (<td>) at the first position of the "new" <tr> element:
   //console.log(Object.keys(sisResults[0]));
+
+  if (!sqlResults){return;}
+
   for (element of Object.keys(sqlResults.recordset[0])) {
     let cell = row.insertCell();
     cell.innerHTML = "<b>" + element + "</b>";
@@ -325,9 +328,33 @@ function drawTableFromSQL() {
 function toggleSelect(ticked){
   console.log(ticked);
   checkboxes = document.getElementsByName('chkGroup');
-  for(var checkbox in checkboxes){
+  for(var checkbox of checkboxes){
     checkbox.checked = ticked;
   }
+}
+
+function mapResults(mapMode){
+
+  switch(mapMode){
+    case "ALL":{
+      console.log("ALL");
+      break;
+    }
+    case "FILTERED":{
+      console.log("FILTERED")
+      break;
+    }
+    case "SELECTED":{
+      console.log("SELECTED")
+      break;
+    }
+    default : {
+      return;
+    }
+  }
+  records = sqlResults;
+  ipcRenderer.send('spawnMap', records);
+
 }
 
 function jmxLogin(e, u, p) {

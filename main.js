@@ -109,6 +109,29 @@ function getFilterLists() {
   win.webContents.send("setFilterLists", columbusList, resilientList);
 }
 
+ipcMain.on('spawnMap', function (e,data){
+  mapWin = new BrowserWindow({
+    show: false,
+    width: 800,
+    height: 600
+  });
+  mapWin.loadURL(
+    url.format({
+      pathname: path.join(__dirname, "map","index.html"),
+      protocol: "file:",
+      slashes: true
+    })
+  );
+  mapWin.on("closed", () => {
+    mapWin = null;
+  });
+
+  mapWin.once("ready-to-show", () => {
+    mapWin.webContents.send("mapMyData", data);
+    mapWin.show();
+  });
+})
+
 // class MasterLB {
 //   constructor(envname, hostname, endpoint, username, password) {
 //     this.envname = envname;

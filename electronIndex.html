@@ -62,6 +62,11 @@
                                         <select name="SAGList"  size="1" disabled="true"></select>
                                     </div>
                                 </div>
+                                <div >
+                                        <button id="searchButton" class="btn btn-primary btn-block">SEARCH</button>
+                                </div>
+                            </div>
+                            <div class="row">
                                 <div>
                                     <div>
                                         <input align="left" type="checkbox" name="ChkColOnly"> Columbus Only?
@@ -69,10 +74,23 @@
                                     <div>
                                         <input align="left" type="checkbox" name="ChkResOnly"> Resilient Only?
                                     </div>
-                                    <button id="filterButton" class="btn btn-primary btn-block" onclick="drawTableFromSQL()">filter</button>
                                 </div>
-                                <div >
-                                        <button id="searchButton" class="btn btn-primary btn-block">SEARCH</button>
+                                <div>
+                                    <div>
+                                        <button id="filterButton" class="btn btn-secondary btn-block" onclick="drawTableFromSQL()">filter</button>
+                                    </div>
+                                </div>
+                                <div width="10px">
+
+                                </div>
+                                <div>
+                                    
+                                        <button id="mapAllButton" class="btn btn-primary" onclick="mapResults('ALL')">Map All</button>
+                                    
+                                        <button id="mapFilteredButton" class="btn btn-primary" onclick="mapResults('FILTERED')">Map Filtered</button>
+                                    
+                                        <button id="mapSelectedButton" class="btn btn-primary" onclick="mapResults('SELECTED')">Map Selection</button>
+                                    
                                 </div>
                             </div>
                         </table>
