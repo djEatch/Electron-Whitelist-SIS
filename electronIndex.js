@@ -315,6 +315,7 @@ function drawTableFromSQL() {
       chk.type = "checkbox";
       chk.id = "chk_" + storenum;
       chk.name = "chkGroup"
+      chk.value = storenum;
       cell.appendChild(chk);
       row.className = "table-info";
     }
@@ -334,7 +335,7 @@ function toggleSelect(ticked){
 }
 
 function mapResults(mapMode){
-
+let records = [];
   switch(mapMode){
     case "ALL":{
       console.log("ALL");
@@ -352,6 +353,16 @@ function mapResults(mapMode){
     }
     case "SELECTED":{
       console.log("SELECTED")
+      checkboxes = document.getElementsByName('chkGroup');
+      for(var checkbox of checkboxes){
+        if(checkbox.checked){
+          for (record of sqlResults.recordset ){
+            if(record.Property_id == checkbox.value){
+              records.push(record);
+            }
+          }
+        }
+      }
       break;
     }
     default : {
