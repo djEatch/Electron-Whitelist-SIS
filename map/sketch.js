@@ -7,26 +7,50 @@
 
 require("p5");
 
+const electron = require("electron");
+const { ipcRenderer } = electron;
+const bootstrap = require("bootstrap"); //required even though not called!!
+var $ = require("jquery");
+
 let youtubeData;
 let countries;
 
 const mappa = new Mappa('Leaflet');
-let trainMap;
+let myMap;
+let initiated = false;
 let canvas;
 
-let data = [];
+let data;
 
 const options = {
   lat: 0,
   lng: 0,
-  zoom: 1.5,
+  zoom: 5,
   style: "http://{s}.tile.osm.org/{z}/{x}/{y}.png"
 }
 
-ipcRenderer.on("mapMyData", function(e, data) {
+ipcRenderer.on("mapMyData", function(e, dataIn) {
+  data = dataIn;
   console.log(data);
+  canvas = createCanvas(800, 600);
+  myMap = mappa.tileMap(options);
+  myMap.overlay(canvas);
+  initiated = true;
 });
 
+
+function draw() {
+  if(initiated){
+  clear();
+  for (let record of data) {
+    const pix = myMap.latLngToPixel(record.Latitude, record.Longitude);
+    fill(frameCount % 255, 0, 200, 100);
+    const zoom = myMap.zoom();
+    const scl = pow(2, zoom); // * sin(frameCount * 0.1);
+    ellipse(pix.x, pix.y, 4 * scl);
+  }
+  }
+}
 
 
 // function preload() {

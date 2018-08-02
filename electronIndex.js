@@ -352,7 +352,7 @@ function mapResults(mapMode){
       return;
     }
   }
-  records = sqlResults;
+  records = sqlResults.recordset;
   ipcRenderer.send('spawnMap', records);
 
 }
