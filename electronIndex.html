@@ -23,45 +23,54 @@
                 <div id="optionsDiv" class="col-md-12">
                             <div class="row">
                                 <div>
+                                    <div>
+                                        <input type="checkbox" name="ChkDivision" value="5" onclick="jsEnableControl(5,this.checked,'DivisionList');">Division
+                                    </div>
+                                    <div>	
+                                        <select name="DivisionList" disabled="true"></select>
+                                    </div>   
+                                </div>
                                 <div>
-                                    <input type="checkbox" name="ChkDivision" value="5" onclick="jsEnableControl(5,this.checked,'DivisionList');">Division
-                                </div>
-                                <div>	
-                                    <select name="DivisionList" disabled="true"></select>
-                                </div>   
-                            </div>
-                            <div>
-                                <div >
-                                    <input type="checkbox" name="ChkRegion" value="6" onclick="jsEnableControl(6,this.checked,'RegionList');">Region
-                                </div>
-                                <div >	
-                                    <select name="RegionList" disabled="true"></select>
-                                </div>
-                            </div> 
-                            <div>
+                                    <div >
+                                        <input type="checkbox" name="ChkRegion" value="6" onclick="jsEnableControl(6,this.checked,'RegionList');">Region
+                                    </div>
+                                    <div >	
+                                        <select name="RegionList" disabled="true"></select>
+                                    </div>
+                                </div> 
                                 <div>
-                                    <input align="left" type="checkbox" name="ChkArea" value="7" onclick="jsEnableControl(7,this.checked,'CAList');">Area
+                                    <div>
+                                        <input align="left" type="checkbox" name="ChkArea" value="7" onclick="jsEnableControl(7,this.checked,'CAList');">Area
+                                    </div>
+                                    <div valign="left" align="left" >	
+                                        <select name="CAList"  size="1" disabled="true"></select>	
+                                    </div>
                                 </div>
-                                <div valign="left" align="left" >	
-                                    <select name="CAList"  size="1" disabled="true"></select>	
-                                </div>
-                            </div>
-                            <div>
-                                <div >
-                                    <input align="left" type="checkbox" name="ChkFormat" value="8" onclick="jsEnableControl(8,this.checked,'FormatList');">Format
-                                </div>
-                                <div >	
-                                    <select name="FormatList"  size="1" disabled="true"></select>
-                                </div>
-                            </div>
-                            <div>
                                 <div>
-                                    <input align="left" type="checkbox" name="ChkSAG" value="9" onclick="jsEnableControl(11,this.checked,'SAGList');">SAG
+                                    <div >
+                                        <input align="left" type="checkbox" name="ChkFormat" value="8" onclick="jsEnableControl(8,this.checked,'FormatList');">Format
+                                    </div>
+                                    <div >	
+                                        <select name="FormatList"  size="1" disabled="true"></select>
+                                    </div>
                                 </div>
-                                <div >
-                                    <select name="SAGList"  size="1" disabled="true"></select>
+                                <div>
+                                    <div>
+                                        <input align="left" type="checkbox" name="ChkSAG" value="9" onclick="jsEnableControl(11,this.checked,'SAGList');">SAG
+                                    </div>
+                                    <div >
+                                        <select name="SAGList"  size="1" disabled="true"></select>
+                                    </div>
                                 </div>
-                            </div>
+                                <div>
+                                    <div>
+                                        <input align="left" type="checkbox" name="ChkColOnly"> Columbus Only?
+                                    </div>
+                                    <div>
+                                        <input align="left" type="checkbox" name="ChkResOnly"> Resilient Only?
+                                    </div>
+                                    <button id="filterButton" class="btn btn-primary btn-block" onclick="drawTableFromSQL()">filter</button>
+                                </div>
                                 <div >
                                         <button id="searchButton" class="btn btn-primary btn-block">SEARCH</button>
                                 </div>
@@ -69,11 +78,11 @@
                         </table>
                     </div>
 
-                <div class="row">
+                <!-- <div class="row">
                     <div class="col-md-12">
                             <button id="fudgeButton" class="btn btn-primary btn-block">FUDGE BUTTON</button>
                     </div>
-                </div>
+                </div> -->
                 <!-- <div class="row">
                     <div class="col-md-12">
                         <button id="fudgeButton" class="btn btn-primary btn-block">FUDGE BUTTON</button>
@@ -82,7 +91,7 @@
         </nav>
     </div>
 
-    <div class="container-fluid" style="margin-top: 70px; margin-bottom:10px">
+    <div class="container-fluid" style="margin-top: 100px; margin-bottom:10px">
         <!-- <div class="row">
             <div class="col-md-12">
                 <button id="fudgeButton" class="btn btn-primary btn-block">FUDGE BUTTON</button>

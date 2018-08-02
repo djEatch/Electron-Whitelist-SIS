@@ -22,13 +22,15 @@ let resilientList = [];
 
 let columbusCol = "Columbus";
 let resilientCol = "Resilient";
+let sqlResults;
+const columnsToShow = []
 
 let sortOptions = { currentField: null, currentDir: -1 };
 
 const modalDiv = document.querySelector("#modalDiv");
 
-const fudgeButton = document.querySelector("#fudgeButton");
-fudgeButton.addEventListener("click", fudgeFunction);
+// const fudgeButton = document.querySelector("#fudgeButton");
+// fudgeButton.addEventListener("click", fudgeFunction);
 
 const searchButton = document.querySelector("#searchButton");
 searchButton.addEventListener("click", _ => {
@@ -41,93 +43,109 @@ let areaListData;
 let sagListData;
 let formatListData;
 
+let masterData;
+
 getMasterData();
 console.log(divisionListData);
 console.log(regionListData);
 console.log(areaListData);
 
-function fudgeFunction() {
-  console.log("Clicked");
-  //whatDoesLBThinkOfThisServer(serverList[6]);
-  //makeModal();
-  //$('#collapseThree').collapse('hide')
-  //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
-  //ipcRenderer.send('showServerWindow',serverList);
-  //ipcRenderer.send("getFilterLists");
-  //getSearchResults();
-  // thing = document.querySelector("#modalJMXpara")
-  // thing.innerHTML="TEXT FROM FUDGE"
-  // $("#jmxLoginModalDiv").modal("show");
-  // sqlConnect();
-}
+// function fudgeFunction() {
+//   console.log("Clicked");
+//   //whatDoesLBThinkOfThisServer(serverList[6]);
+//   //makeModal();
+//   //$('#collapseThree').collapse('hide')
+//   //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
+//   //ipcRenderer.send('showServerWindow',serverList);
+//   //ipcRenderer.send("getFilterLists");
+//   //getSearchResults();
+//   // thing = document.querySelector("#modalJMXpara")
+//   // thing.innerHTML="TEXT FROM FUDGE"
+//   // $("#jmxLoginModalDiv").modal("show");
+//   // sqlConnect();
+// }
 
 async function getMasterData() {
-  try {
-    let pool = await sql.connect(sqlConfig);
-    masterData = await sql.query`SELECT top 100  * from dbo.t_division;SELECT TOP 100 * from dbo.t_region;SELECT TOP 100 * from dbo.t_area;select top 100 * from dbo.t_SAG;SELECT distinct [trading_format] FROM dbo.T_PROPERTY;`;
-    sql.close();
-  } catch (err) {
-    console.log(err);
-  }
+  // try {
+  //   let pool = await sql.connect(sqlConfig);
+  //   masterData = await sql.query`SELECT top 100  * from dbo.t_division;SELECT TOP 100 * from dbo.t_region;SELECT TOP 100 * from dbo.t_area;select top 100 * from dbo.t_SAG;SELECT distinct [trading_format] FROM dbo.T_PROPERTY;`;
+  //   sql.close();
+  // } catch (err) {
+  //   console.log(err);
+  // }
+  let pool = await sql.connect(sqlConfig);
+  let request = new sql.Request();
+  request.multiple = true;
 
-  let divisionDropDown = document.all.item("DivisionList");
-  let regionDropDown = document.all.item("RegionList");
-  let areaDropDown = document.all.item("CAList");
-  let sagDropDown = document.all.item("SAGList");
-  let formatDropDown = document.all.item("FormatList");
+  await request.query(
+    "SELECT top 100  * from dbo.t_division;SELECT TOP 100 * from dbo.t_region;SELECT TOP 100 * from dbo.t_area;select top 100 * from dbo.t_SAG;SELECT distinct [trading_format] FROM dbo.T_PROPERTY;",
+    (err, result) => {
+      // ... error checks
+      console.log(result);
+      console.log(err);
+      masterData = result;
 
-  divisionListData = masterData.recordsets[0];
-  regionListData = masterData.recordsets[1];
-  areaListData = masterData.recordsets[2];
-  sagListData = masterData.recordsets[3];
-  formatListData = masterData.recordsets[4];
-  
+      //sql.close();
 
-  for (record of divisionListData) {
-    let option = document.createElement("option");
-    option.value = record["Division_number"];
-    option.text = record["Division_number"] + "-" + record["Division_Name"];
-    divisionDropDown.add(option);
-  }
+      let divisionDropDown = document.all.item("DivisionList");
+      let regionDropDown = document.all.item("RegionList");
+      let areaDropDown = document.all.item("CAList");
+      let sagDropDown = document.all.item("SAGList");
+      let formatDropDown = document.all.item("FormatList");
 
-  for (record of regionListData) {
-    let option = document.createElement("option");
-    option.value = record["Region_number"];
-    option.text = record["Region_number"] + "-" + record["Region_name"];
-    regionDropDown.add(option);
-  }
+      divisionListData = masterData.recordsets[0];
+      regionListData = masterData.recordsets[1];
+      areaListData = masterData.recordsets[2];
+      sagListData = masterData.recordsets[3];
+      formatListData = masterData.recordsets[4];
 
-  for (record of areaListData) {
-    let option = document.createElement("option");
-    option.value = record["Area_number"];
-    option.text = record["Area_number"] + "-" + record["Area_name"];
-    areaDropDown.add(option);
-  }
+      for (record of divisionListData) {
+        let option = document.createElement("option");
+        option.value = record["Division_number"];
+        option.text = record["Division_number"] + "-" + record["Division_Name"];
+        divisionDropDown.add(option);
+      }
 
-  let sagShortList = [];
-  for (record of sagListData) {
-    sagShortList.push(record["SAG"].substr(0,1));
-  }
-  sagShortList = sagShortList.filter( onlyUnique );
-  for (record of sagShortList) {
-    let option = document.createElement("option");
-    option.value = record;
-    option.text = record;
-    sagDropDown.add(option);
-  }
+      for (record of regionListData) {
+        let option = document.createElement("option");
+        option.value = record["Region_number"];
+        option.text = record["Region_number"] + "-" + record["Region_name"];
+        regionDropDown.add(option);
+      }
 
-  for (record of formatListData) {
-    let option = document.createElement("option");
-    option.value = record["trading_format"];
-    option.text = record["trading_format"];
-    formatDropDown.add(option);
-  }
+      for (record of areaListData) {
+        let option = document.createElement("option");
+        option.value = record["Area_number"];
+        option.text = record["Area_number"] + "-" + record["Area_name"];
+        areaDropDown.add(option);
+      }
 
-  console.log(divisionListData);
-  console.log(regionListData);
-  console.log(areaListData);
-  console.log(sagListData);
-  console.log(formatListData);
+      let sagShortList = [];
+      for (record of sagListData) {
+        sagShortList.push(record["SAG"].substr(0, 1));
+      }
+      sagShortList = sagShortList.filter(onlyUnique);
+      for (record of sagShortList) {
+        let option = document.createElement("option");
+        option.value = record;
+        option.text = record;
+        sagDropDown.add(option);
+      }
+
+      for (record of formatListData) {
+        let option = document.createElement("option");
+        option.value = record["trading_format"];
+        option.text = record["trading_format"];
+        formatDropDown.add(option);
+      }
+
+      console.log(divisionListData);
+      console.log(regionListData);
+      console.log(areaListData);
+      console.log(sagListData);
+      console.log(formatListData);
+    }
+  );
 }
 
 async function sqlQuery(queryString) {
@@ -190,26 +208,126 @@ ipcRenderer.on("setFilterLists", function(e, _columbusList, _resilientList) {
   columbusList = _columbusList;
   resilientList = _resilientList;
   //getSearchResults();
-  let sqlQuery = buildSQLQueryString()
-
-  let sqlResults = getSQLResults(sqlQuery);
-  console.log(sqlResults);
+  let sqlQuery = buildSQLQueryString();
+  getSQLResults(sqlQuery)
+    .then(results => {sqlResults = results;addExternalData(sqlResults);drawTableFromSQL()})
+  //console.log(sqlResults);
   // drawTableFromArray(sqlResults);
 });
 
-async function getSQLResults(sqlQuery){
-  let results
-  try {
-    let pool = await sql.connect(sqlConfig);
-    console.log(`${sqlQuery}`);
-    results = await sql.query`SELECT * FROM [Property].[dbo].[T_PROPERTY] p left join [Property].[dbo].[T_SAG] s on p.sq_metres >= s.lower_limit and  p.sq_metres <= s.upper_limit ${sqlQuery} ;`;
-    sql.close();
-    console.log(results);
-  } catch (err) {
-    console.log(err);
-    results = [];
+async function getSQLResults(sqlQuery) {
+  let results;
+  sql.close();
+  let pool = await sql.connect(sqlConfig);
+  let request = new sql.Request();
+
+  // results = await request.query(
+  //   "SELECT TOP 10 * FROM [Property].[dbo].[T_PROPERTY] p left join [Property].[dbo].[T_SAG] s on p.sq_metres >= s.lower_limit and  p.sq_metres <= s.upper_limit ;").then((result) => {
+  //       return result;
+  //   });
+
+  return await request.query(
+    "SELECT p.Property_id, p.property_name, p.region_id, p.customer_area_id,p.format, p.trading_format, p.store_origin, s.SAG  , tsa1.value_text as 'Latitude', tsa2.value_text as 'Longitude'  FROM [Property].[dbo].[T_PROPERTY] p left join [Property].[dbo].[T_SAG] s on p.sq_metres >= s.lower_limit and  p.sq_metres <= s.upper_limit " +
+    "left join t_store_attribute tsa1 on tsa1.store_number = p.property_id and tsa1.attribute_id = 39" +
+    "left join t_store_attribute tsa2 on tsa2.store_number = p.property_id and tsa2.attribute_id = 40" +
+    sqlQuery +
+    ";"
+    ).then((result) => {
+        return result;
+    });
+
+  // console.log(results);
+
+  // return results;
+}
+
+function addExternalData(resultSet){
+  console.log(resultSet);
+  for (result of resultSet.recordset){
+    result[columbusCol] = "FALSE";
+    result[resilientCol] = "FALSE";
+
+    let storeNum = toFourDigits(result['Property_id']);
+    for (site of columbusList) {
+      if (site == storeNum) {
+        result[columbusCol] = "TRUE";
+        break;
+      }
+    }
+    for (site of resilientList) {
+      if (site == storeNum) {
+        result[resilientCol] = "TRUE";
+        break;
+      }
+    }
   }
-  return results;
+
+}
+
+function drawTableFromSQL() {
+  //filterButton
+  //console.log(sqlResults);
+  let table = document.createElement("table");
+  table.classList = "table table-light table-hover";
+
+  // Create an empty <thead> element and add it to the table:
+  var header = table.createTHead();
+  header.classList = "thead-dark";
+
+  // Create an empty <tr> element and add it to the first position of <thead>:
+  var row = header.insertRow(0);
+
+  // Insert a new cell (<td>) at the first position of the "new" <tr> element:
+  //console.log(Object.keys(sisResults[0]));
+  for (element of Object.keys(sqlResults.recordset[0])) {
+    let cell = row.insertCell();
+    cell.innerHTML = "<b>" + element + "</b>";
+  }
+  let cell = row.insertCell();
+  cell.innerHTML = '<b>Select</b><input align="left" type="checkbox" name="chkSelect" onclick="toggleSelect(this.checked)">';
+
+  let ChkColOnly = document.all.item("ChkColOnly");
+  let ChkResOnly = document.all.item("ChkResOnly");
+
+  for (result of sqlResults.recordset) {
+    if ((result[columbusCol] == "TRUE" || !ChkColOnly.checked) && (result[resilientCol]=="TRUE" || !ChkResOnly.checked)) {
+      let row = table.insertRow();
+      let storenum;
+      //console.log(result);
+      Object.keys(result).map(function(objectKey, index) {
+        var value = result[objectKey];
+        let cell = row.insertCell();
+        cell.innerHTML = value;
+        if (objectKey == "Property_id") {
+          storenum = value;
+          cell.addEventListener("click", () => {
+            console.log("clicked", value);
+            //getStoreDetail(value);
+            //ipcRenderer.send('popup',server);
+          });
+        }
+      });
+      let cell = row.insertCell();
+      let chk = document.createElement("input");
+      chk.type = "checkbox";
+      chk.id = "chk_" + storenum;
+      chk.name = "chkGroup"
+      cell.appendChild(chk);
+      row.className = "table-info";
+    }
+  }
+
+  let tableDiv = document.getElementById("TableDiv");
+  tableDiv.innerHTML = "";
+  tableDiv.appendChild(table);
+}
+
+function toggleSelect(ticked){
+  console.log(ticked);
+  checkboxes = document.getElementsByName('chkGroup');
+  for(var checkbox in checkboxes){
+    checkbox.checked = ticked;
+  }
 }
 
 function jmxLogin(e, u, p) {
@@ -277,52 +395,68 @@ function humanEnvName(envText) {
   }
 }
 
-function buildSQLQueryString(){
+function buildSQLQueryString() {
   //ipcRenderer.send("getFilterLists");
-  let queryString = '';
-  
+  let queryString = "";
+
   let ChkDivision = document.all.item("ChkDivision");
   let ChkRegion = document.all.item("ChkRegion");
   let ChkArea = document.all.item("ChkArea");
   let ChkFormat = document.all.item("ChkFormat");
   let ChkSAG = document.all.item("ChkSAG");
 
-  if (ChkDivision.checked||ChkRegion.checked||ChkArea.checked||ChkFormat.checked||ChkSAG.checked) {
-    queryString += " WHERE "
+  if (
+    ChkDivision.checked ||
+    ChkRegion.checked ||
+    ChkArea.checked ||
+    ChkFormat.checked ||
+    ChkSAG.checked
+  ) {
+    queryString += " WHERE ";
   }
 
-  if(ChkDivision.checked){
+  if (ChkDivision.checked) {
     let divisionValue = document.all.item("DivisionList").value; //10 //."14-London";
-    if(queryString.substr(-7) != " WHERE ") {queryString += " AND "}
-    queryString += ` DIVISION_ID = ${divisionValue} `
+    if (queryString.substr(-7) != " WHERE ") {
+      queryString += " AND ";
+    }
+    queryString += ` DIVISION_ID = '${divisionValue}' `;
   }
 
-  if(ChkRegion.checked){
-  let regionValue = document.all.item("RegionList").value; //"10-Airports";
-  if(queryString.substr(-7) != " WHERE ") {queryString += " AND "}
-    queryString += ` REGION_ID = ${regionValue} `
+  if (ChkRegion.checked) {
+    let regionValue = document.all.item("RegionList").value; //"10-Airports";
+    if (queryString.substr(-7) != " WHERE ") {
+      queryString += " AND ";
+    }
+    queryString += ` REGION_ID = '${regionValue}' `;
   }
- 
-  if(ChkArea.checked){
+
+  if (ChkArea.checked) {
     let areaValue = document.all.item("CAList").value; //"311-Heathrow%20Airport";
-    if(queryString.substr(-7) != " WHERE ") {queryString += " AND "}
-    queryString += ` CUSTOMER_AREA_ID = ${areaValue} `
+    if (queryString.substr(-7) != " WHERE ") {
+      queryString += " AND ";
+    }
+    queryString += ` CUSTOMER_AREA_ID = '${areaValue}' `;
   }
-  
-  if(ChkFormat.checked){
+
+  if (ChkFormat.checked) {
     let formatValue = document.all.item("FormatList").value;
-    if(queryString.substr(-7) != " WHERE ") {queryString += " AND "}
-    queryString += ` TRADING_FORMAT = ${formatValue} `
+    if (queryString.substr(-7) != " WHERE ") {
+      queryString += " AND ";
+    }
+    queryString += ` TRADING_FORMAT = '${formatValue}' `;
   }
-  
-  if (ChkSAG.checked){
+
+  if (ChkSAG.checked) {
     let sagValue = document.all.item("SAGList").value;
-    if(queryString.substr(-7) != " WHERE ") {queryString += " AND "}
-    queryString += ` left(SAG,1) = ${sagValue} `
+    if (queryString.substr(-7) != " WHERE ") {
+      queryString += " AND ";
+    }
+    queryString += ` left(SAG,1) = '${sagValue}' `;
   }
-  
+
   console.log(queryString);
-  return queryString
+  return queryString;
 }
 
 function buildQueryString() {
@@ -769,7 +903,6 @@ function jsEnableControl(itemNumber, visible, controlName) {
     }
   }
 }
-
 
 /*
 
