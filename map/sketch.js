@@ -23,9 +23,9 @@ let canvas;
 let data;
 
 let options = {
-  lat: 52.9271,
-  lng: 1.1841,
-  zoom: 8,
+  lat: 52.9271382,
+  lng: -1.1862859,
+  zoom: 6,
   style: "http://{s}.tile.osm.org/{z}/{x}/{y}.png"
 }
 
@@ -33,10 +33,11 @@ ipcRenderer.on("mapMyData", function(e, dataIn) {
   data = dataIn;
   console.log(data);
 
+  if (data.length > 0){
   let centrePoint = getAverageLocation(data);
   options.lat = centrePoint.lat;
   options.lng = centrePoint.lng;
-
+  }
   canvas = createCanvas(800, 600);
   myMap = mappa.tileMap(options);
   myMap.overlay(canvas);

@@ -338,10 +338,16 @@ function mapResults(mapMode){
   switch(mapMode){
     case "ALL":{
       console.log("ALL");
+      records = sqlResults.recordset;
       break;
     }
     case "FILTERED":{
       console.log("FILTERED")
+      let ChkColOnly = document.all.item("ChkColOnly");
+      let ChkResOnly = document.all.item("ChkResOnly");
+      records = sqlResults.recordset.filter(function(item) {
+        return ((item[columbusCol] == "TRUE" || !ChkColOnly.checked) && (item[resilientCol]=="TRUE" || !ChkResOnly.checked));
+      })
       break;
     }
     case "SELECTED":{
@@ -352,7 +358,7 @@ function mapResults(mapMode){
       return;
     }
   }
-  records = sqlResults.recordset;
+  
   ipcRenderer.send('spawnMap', records);
 
 }
