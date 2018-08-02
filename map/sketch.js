@@ -22,32 +22,59 @@ let canvas;
 
 let data;
 
-const options = {
-  lat: 0,
-  lng: 0,
-  zoom: 5,
+let options = {
+  lat: 52.9271,
+  lng: 1.1841,
+  zoom: 8,
   style: "http://{s}.tile.osm.org/{z}/{x}/{y}.png"
 }
 
 ipcRenderer.on("mapMyData", function(e, dataIn) {
   data = dataIn;
   console.log(data);
+
+  let centrePoint = getAverageLocation(data);
+  options.lat = centrePoint.lat;
+  options.lng = centrePoint.lng;
+
   canvas = createCanvas(800, 600);
   myMap = mappa.tileMap(options);
   myMap.overlay(canvas);
   initiated = true;
 });
 
+function getAverageLocation(locationData){
+
+  let countLat = 0;
+  let countLon = 0;
+  let totalLat = 0;
+  let totalLon = 0;
+
+
+  for (mapPoint of locationData){
+    if (mapPoint.Latitude && mapPoint.Longitude ) {
+      countLat++;
+      countLon++;
+      totalLat += parseFloat(mapPoint.Latitude);
+      totalLon+=parseFloat(mapPoint.Longitude);
+    }
+  }
+
+return {lat:totalLat/countLat, lng:totalLon/countLon};
+}
+
 
 function draw() {
   if(initiated){
   clear();
   for (let record of data) {
+    if (record.Latitude && record.Longitude ) {
     const pix = myMap.latLngToPixel(record.Latitude, record.Longitude);
     fill(frameCount % 255, 0, 200, 100);
-    const zoom = myMap.zoom();
-    const scl = pow(2, zoom); // * sin(frameCount * 0.1);
-    ellipse(pix.x, pix.y, 4 * scl);
+    //const zoom = myMap.zoom();
+    //const scl = pow(2, zoom); // * sin(frameCount * 0.1);
+    ellipse(pix.x, pix.y, 8);
+    }
   }
   }
 }
