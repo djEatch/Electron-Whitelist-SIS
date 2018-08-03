@@ -34,6 +34,7 @@ let regionListData;
 let areaListData;
 let sagListData;
 let formatListData;
+let closedListData;
 
 let masterData;
 
@@ -61,10 +62,10 @@ async function getMasterData() {
   request.multiple = true;
 
   await request.query(
-    "SELECT top 100  * from dbo.t_division;SELECT TOP 100 * from dbo.t_region;SELECT TOP 100 * from dbo.t_area;select top 100 * from dbo.t_SAG;SELECT distinct [trading_format] FROM dbo.T_PROPERTY;",
+    "SELECT * from dbo.t_division;SELECT * from dbo.t_region;SELECT * from dbo.t_area;select * from dbo.t_SAG;SELECT distinct [trading_format] FROM dbo.T_PROPERTY;SELECT distinct [property_type] FROM dbo.T_PROPERTY;",
     (err, result) => {
 
-      console.log(err);
+      if(err) {console.log(err);return;};
       masterData = result;
 
       //sql.close();
@@ -74,12 +75,14 @@ async function getMasterData() {
       let areaDropDown = document.all.item("CAList");
       let sagDropDown = document.all.item("SAGList");
       let formatDropDown = document.all.item("FormatList");
+      let closedDropDown = document.all.item("ClosedList");
 
       divisionListData = masterData.recordsets[0];
       regionListData = masterData.recordsets[1];
       areaListData = masterData.recordsets[2];
       sagListData = masterData.recordsets[3];
       formatListData = masterData.recordsets[4];
+      closedListData = masterData.recordsets[5];
 
       for (record of divisionListData) {
         let option = document.createElement("option");
@@ -119,6 +122,13 @@ async function getMasterData() {
         option.value = record["trading_format"];
         option.text = record["trading_format"];
         formatDropDown.add(option);
+      }
+
+      for (record of closedListData) {
+        let option = document.createElement("option");
+        option.value = record["property_type"];
+        option.text = record["property_type"];
+        closedDropDown.add(option);
       }
 
       // console.log(divisionListData);
@@ -209,7 +219,7 @@ async function getSQLResults(sqlQuery) {
   //   });
 
   return await request.query(
-    "SELECT p.Property_id, p.property_name, p.region_id, p.customer_area_id,p.format, p.trading_format, p.store_origin, s.SAG  , tsa1.value_text as 'Latitude', tsa2.value_text as 'Longitude'  FROM [Property].[dbo].[T_PROPERTY] p left join [Property].[dbo].[T_SAG] s on p.sq_metres >= s.lower_limit and  p.sq_metres <= s.upper_limit " +
+    "SELECT p.Property_id, p.property_name, p.division_id, p.region_id, p.customer_area_id,p.format, p.trading_format, p.store_origin, p.property_type, s.SAG  , tsa1.value_text as 'Latitude', tsa2.value_text as 'Longitude'  FROM [Property].[dbo].[T_PROPERTY] p left join [Property].[dbo].[T_SAG] s on p.sq_metres >= s.lower_limit and  p.sq_metres <= s.upper_limit " +
     "left join t_store_attribute tsa1 on tsa1.store_number = p.property_id and tsa1.attribute_id = 39" +
     "left join t_store_attribute tsa2 on tsa2.store_number = p.property_id and tsa2.attribute_id = 40" +
     sqlQuery +
@@ -430,6 +440,7 @@ function buildSQLQueryString() {
   let ChkRegion = document.all.item("ChkRegion");
   let ChkArea = document.all.item("ChkArea");
   let ChkFormat = document.all.item("ChkFormat");
+  let ChkClosed = document.all.item("ChkClosed");
   let ChkSAG = document.all.item("ChkSAG");
 
   if (
@@ -437,6 +448,7 @@ function buildSQLQueryString() {
     ChkRegion.checked ||
     ChkArea.checked ||
     ChkFormat.checked ||
+    ChkClosed.checked ||
     ChkSAG.checked
   ) {
     queryString += " WHERE ";
@@ -472,6 +484,20 @@ function buildSQLQueryString() {
       queryString += " AND ";
     }
     queryString += ` TRADING_FORMAT = '${formatValue}' `;
+  }
+
+  if (ChkClosed.checked) {
+    let closedOptions = document.all.item("ClosedList").options;
+    let closedValues = []
+    for (let item of closedOptions) {
+      if(item.selected) {
+        closedValues.push("'" + item.value + "'");
+      }
+    }
+    if (queryString.substr(-7) != " WHERE ") {
+      queryString += " AND ";
+    }
+    queryString += ` PROPERTY_TYPE NOT IN (${closedValues}) `;
   }
 
   if (ChkSAG.checked) {
@@ -905,7 +931,8 @@ function initPageContent() {
   jsEnableControl(6, false, "RegionList");
   jsEnableControl(7, false, "CAList");
   jsEnableControl(8, false, "FormatList");
-  jsEnableControl(9, false, "SAGList");
+  jsEnableControl(9, false, "ClosedList");
+  jsEnableControl(10, false, "SAGList");
 }
 
 function jsEnableControl(itemNumber, visible, controlName) {
