@@ -263,6 +263,7 @@ function drawTableFromSQL() {
   //console.log(Object.keys(sisResults[0]));
 
   if (!sqlResults){return;}
+  if (sqlResults.recordset.length < 1){return;}
 
   for (element of Object.keys(sqlResults.recordset[0])) {
     let cell = row.insertCell();

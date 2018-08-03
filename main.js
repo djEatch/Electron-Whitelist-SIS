@@ -7,8 +7,8 @@ const fs = require("fs");
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
 
-let columbusFile = __dirname + "/ColumbusList.txt";
-let resilientFile = __dirname + "/ResilientList.txt";
+let columbusFile = __dirname + "/data/ColumbusList.txt";
+let resilientFile = __dirname + "/data/ResilientList.txt";
 let configFile = __dirname + "/connection.json";
 
 global.sqlConfigString = fs.readFileSync(configFile).toString();
