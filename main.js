@@ -9,7 +9,9 @@ let win;
 
 let columbusFile = __dirname + "/ColumbusList.txt";
 let resilientFile = __dirname + "/ResilientList.txt";
+let configFile = __dirname + "/connection.json";
 
+global.sqlConfigString = fs.readFileSync(configFile).toString();
 
 app.on("ready", function() {
   // Create the browser window.

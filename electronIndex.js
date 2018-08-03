@@ -4,15 +4,7 @@ const bootstrap = require("bootstrap"); //required even though not called!!
 var $ = require("jquery");
 const sql = require("mssql");
 
-const sqlConfig = {
-  user: "PropertyRO",
-  password: "my%Bait2018",
-  server: "ukc1centwd\\live1",
-  database: "Property",
-  options: {
-    encrypt: false // Use this if you're on Windows Azure
-  }
-};
+const sqlConfig = JSON.parse(electron.remote.getGlobal('sqlConfigString'));
 
 let jmxUsers = [];
 let currentJMXuser;
@@ -46,9 +38,6 @@ let formatListData;
 let masterData;
 
 getMasterData();
-console.log(divisionListData);
-console.log(regionListData);
-console.log(areaListData);
 
 // function fudgeFunction() {
 //   console.log("Clicked");
@@ -66,13 +55,7 @@ console.log(areaListData);
 // }
 
 async function getMasterData() {
-  // try {
-  //   let pool = await sql.connect(sqlConfig);
-  //   masterData = await sql.query`SELECT top 100  * from dbo.t_division;SELECT TOP 100 * from dbo.t_region;SELECT TOP 100 * from dbo.t_area;select top 100 * from dbo.t_SAG;SELECT distinct [trading_format] FROM dbo.T_PROPERTY;`;
-  //   sql.close();
-  // } catch (err) {
-  //   console.log(err);
-  // }
+
   let pool = await sql.connect(sqlConfig);
   let request = new sql.Request();
   request.multiple = true;
@@ -80,8 +63,7 @@ async function getMasterData() {
   await request.query(
     "SELECT top 100  * from dbo.t_division;SELECT TOP 100 * from dbo.t_region;SELECT TOP 100 * from dbo.t_area;select top 100 * from dbo.t_SAG;SELECT distinct [trading_format] FROM dbo.T_PROPERTY;",
     (err, result) => {
-      // ... error checks
-      console.log(result);
+
       console.log(err);
       masterData = result;
 
@@ -139,11 +121,11 @@ async function getMasterData() {
         formatDropDown.add(option);
       }
 
-      console.log(divisionListData);
-      console.log(regionListData);
-      console.log(areaListData);
-      console.log(sagListData);
-      console.log(formatListData);
+      // console.log(divisionListData);
+      // console.log(regionListData);
+      // console.log(areaListData);
+      // console.log(sagListData);
+      // console.log(formatListData);
     }
   );
 }
