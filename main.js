@@ -7,8 +7,11 @@ const fs = require("fs");
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
 
-let envFile = __dirname + "/EnvTypeList.txt";
-let masterLBList = [];
+let columbusFile = __dirname + "/data/ColumbusList.txt";
+let resilientFile = __dirname + "/data/ResilientList.txt";
+let configFile = __dirname + "/connection.json";
+
+global.sqlConfigString = fs.readFileSync(configFile).toString();
 
 app.on("ready", function() {
   // Create the browser window.
@@ -16,12 +19,7 @@ app.on("ready", function() {
     show: false,
     width: 800,
     height: 600,
-    webSecurity: true// ,
-    // webPreferences: {
-    //   //nodeIntegration: false
-    //   //preload: path.join(__dirname, 'electronIndex.js'),
-    //   contextIsolation: true
-    // }
+    webSecurity: true
   });
 
   // and load the index.html of the app.
@@ -32,6 +30,7 @@ app.on("ready", function() {
       slashes: true
     })
   );
+  win.webContents.openDevTools()
 
   // Emitted when the window is closed.
   win.on("closed", () => {
@@ -51,52 +50,89 @@ app.on("ready", function() {
   Menu.setApplicationMenu(winMenu);
 });
 
-ipcMain.on('showServerWindow', function(e,data){
-  serverWin = new BrowserWindow({
+// ipcMain.on('showServerWindow', function(e,data){
+//   serverWin = new BrowserWindow({
+//     show: false,
+//     width: 800,
+//     height: 600
+//   });
+//   serverWin.loadURL(
+//     url.format({
+//       pathname: path.join(__dirname, "serverWindow.html"),
+//       protocol: "file:",
+//       slashes: true
+//     })
+//   );
+//   serverWin.on("closed", () => {
+//     serverWin = null;
+//   });
+
+//   serverWin.once("ready-to-show", () => {
+//     serverWin.webContents.send("showServerList", data);
+//     serverWin.show();
+//   });
+// })
+
+ipcMain.on('getFilterLists',getFilterLists);
+
+function getFilterLists() {
+
+  let columbusList = [];
+  let resilientList = [];
+
+  let data,allTextLines, headers;
+  
+  data = fs.readFileSync(columbusFile).toString();
+
+  allTextLines = data.split(/\r\n|\n/);
+  headers = allTextLines[0].split(",");
+
+  for (let i = 1; i < allTextLines.length; i++) {
+    // split content based on comma
+    let data = allTextLines[i].split(",");
+    if (data.length == headers.length) {
+      columbusList.push(data[0].replace(/['"]+/g, ""));
+    }
+  }
+
+  data = fs.readFileSync(resilientFile).toString();
+
+  allTextLines = data.split(/\r\n|\n/);
+  headers = allTextLines[0].split(",");
+
+  for (let i = 1; i < allTextLines.length; i++) {
+    // split content based on comma
+    let data = allTextLines[i].split(",");
+    if (data.length == headers.length) {
+      resilientList.push(data[0].replace(/['"]+/g, ""));
+    }
+  }
+
+  win.webContents.send("setFilterLists", columbusList, resilientList);
+}
+
+ipcMain.on('spawnMap', function (e,data){
+  mapWin = new BrowserWindow({
     show: false,
     width: 800,
     height: 600
   });
-  serverWin.loadURL(
+  mapWin.loadURL(
     url.format({
-      pathname: path.join(__dirname, "serverWindow.html"),
+      pathname: path.join(__dirname, "map","index.html"),
       protocol: "file:",
       slashes: true
     })
   );
-  serverWin.on("closed", () => {
-    serverWin = null;
+  mapWin.on("closed", () => {
+    mapWin = null;
   });
 
-  serverWin.once("ready-to-show", () => {
-    serverWin.webContents.send("showServerList", data);
-    serverWin.show();
+  mapWin.once("ready-to-show", () => {
+    mapWin.webContents.send("mapMyData", data);
+    mapWin.show();
   });
 })
-
-// function getMasterLBList() {
-//   masterLBList = [];
-//   var data = fs.readFileSync(envFile).toString();
-
-//   let allTextLines = data.split(/\r\n|\n/);
-//   let headers = allTextLines[0].split(",");
-
-//   for (let i = 1; i < allTextLines.length; i++) {
-//     // split content based on comma
-//     let data = allTextLines[i].split(",");
-//     if (data.length == headers.length) {
-//       let myEnv = new MasterLB(
-//         data[0].replace(/['"]+/g, ""),
-//         data[1].replace(/['"]+/g, ""),
-//         data[2].replace(/['"]+/g, "")//,
-//         //data[3].replace(/['"]+/g, ""),
-//         //data[4].replace(/['"]+/g, "")
-//       );
-//       masterLBList.push(myEnv);
-//     }
-//   }
-//   win.webContents.send("updateMasterLBList", masterLBList);
-// }
 
 // class MasterLB {
 //   constructor(envname, hostname, endpoint, username, password) {
