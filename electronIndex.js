@@ -48,7 +48,6 @@ getMasterData();
 //   //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
 //   //ipcRenderer.send('showServerWindow',serverList);
 //   //ipcRenderer.send("getFilterLists");
-//   //getSearchResults();
 //   // thing = document.querySelector("#modalJMXpara")
 //   // thing.innerHTML="TEXT FROM FUDGE"
 //   // $("#jmxLoginModalDiv").modal("show");
@@ -199,7 +198,6 @@ function onlyUnique(value, index, self) {
 ipcRenderer.on("setFilterLists", function(e, _columbusList, _resilientList) {
   columbusList = _columbusList;
   resilientList = _resilientList;
-  //getSearchResults();
   let sqlQuery = buildSQLQueryString();
   getSQLResults(sqlQuery)
     .then(results => {sqlResults = results;addExternalData(sqlResults);drawTableFromSQL()})
@@ -298,8 +296,6 @@ function drawTableFromSQL() {
           storenum = value;
           cell.addEventListener("click", () => {
             console.log("clicked", value);
-            //getStoreDetail(value);
-            //ipcRenderer.send('popup',server);
           });
         }
       });
@@ -568,32 +564,6 @@ function buildQueryString() {
   return outputString;
 }
 
-function getSearchResults() {
-  let baseURL =
-    "http://www.webapp2.int.boots.com/property/Reports/repProperty-AdvancedSearch.asp";
-  //let queryURL = "propertyIndex=1&propertyValue=6&propertyFilterIndex=0&sagIndex=9&sagValue=A"
-  let queryURL = buildQueryString();
-  console.log(baseURL + queryURL);
-  console.log(columbusList);
-  getRequest(gotSearchResults, baseURL + queryURL, "myID");
-}
-
-function gotSearchResults(resp, id) {
-  //console.log(resp,id);
-
-  let parser = new DOMParser();
-  let reply = parser.parseFromString(resp, "text/html");
-  let inTable = reply.getElementById("MainTable");
-  if (inTable) {
-    sisResults = resultsToArray(inTable);
-    drawTableFromArray(sisResults);
-  } else {
-    let tableDiv = document.getElementById("TableDiv");
-    tableDiv.innerHTML = "";
-  }
-  //drawTableFromTable(inTable);
-}
-
 function gotDetailResults(resp, id) {
   let parser = new DOMParser();
   let reply = parser.parseFromString(resp, "text/html");
@@ -653,37 +623,6 @@ function drawTableFromArray(resultSet) {
   let tableDiv = document.getElementById("TableDiv");
   tableDiv.innerHTML = "";
   tableDiv.appendChild(table);
-}
-
-function drawTableFromTable(inTable) {
-  let outTable = document.createElement("TABLE");
-  outTable.id = "outTable";
-  outTable.classList = "table table-light table-hover";
-
-  let headerSet = false;
-  for (let inRow = 0; inRow < inTable.rows.length; inRow++) {
-    //console.log(inRow, inTable.rows[inRow]);
-    if (inTable.rows[inRow].cells.length > 1) {
-      let outRow;
-      if (!headerSet) {
-        var header = outTable.createTHead();
-        header.classList = "thead-dark";
-        outRow = header.insertRow();
-        headerSet = true;
-      } else {
-        outRow = outTable.insertRow();
-        outRow.className = "table-info";
-      }
-      for (let inCol = 0; inCol < inTable.rows[inRow].cells.length; inCol++) {
-        //console.log(inRow, inCol, inTable.rows[inRow].cells[inCol].textContent);
-        let outCell = outRow.insertCell();
-        outCell.innerHTML = inTable.rows[inRow].cells[inCol].textContent;
-      }
-    }
-  }
-
-  let tableDiv = document.getElementById("TableDiv");
-  tableDiv.appendChild(outTable);
 }
 
 function toFourDigits(_storeNum) {
