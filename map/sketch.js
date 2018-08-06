@@ -19,7 +19,7 @@ let youtubeData;
 let countries;
 
 const mappa = new Mappa('Leaflet');
-//const mappa = new Mappa("Google", "AIzaSyAiflBlS2ROLUrwGHvCl3mMRT2GX-kUwJ4");
+
 let myMap;
 let initiated = false;
 let canvas;
