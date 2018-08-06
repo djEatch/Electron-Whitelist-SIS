@@ -289,6 +289,7 @@ function drawTableFromSQL() {
       let storenum;
       //console.log(result);
       Object.keys(result).map(function(objectKey, index) {
+        if (objectKey != "user_selected") {
         var value = result[objectKey];
         let cell = row.insertCell();
         cell.innerHTML = value;
@@ -297,7 +298,8 @@ function drawTableFromSQL() {
           cell.addEventListener("click", () => {
             console.log("clicked", value);
           });
-        }
+        } 
+      }
       });
       let cell = row.insertCell();
       let chk = document.createElement("input");
@@ -305,6 +307,14 @@ function drawTableFromSQL() {
       chk.id = "chk_" + storenum;
       chk.name = "chkGroup"
       chk.value = storenum;
+      chk.addEventListener("click", () => {
+        selectStore(storenum, chk.checked);
+      });
+      if (result['user_selected']){
+      chk.checked = result['user_selected'];
+      } else {
+        chk.checked = false;
+      }
       cell.appendChild(chk);
       row.className = "table-info";
     }
@@ -315,11 +325,23 @@ function drawTableFromSQL() {
   tableDiv.appendChild(table);
 }
 
+function selectStore(num, ticked){
+
+  for (result of sqlResults.recordset){
+    if (result['Property_id'] == num){
+      result['user_selected']= ticked;
+    }
+  }
+}
+
 function toggleSelect(ticked){
   console.log(ticked);
   checkboxes = document.getElementsByName('chkGroup');
   for(var checkbox of checkboxes){
     checkbox.checked = ticked;
+  }
+  for (result of sqlResults.recordset){
+      result['user_selected'] = ticked;
   }
 }
 

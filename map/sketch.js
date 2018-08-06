@@ -12,11 +12,14 @@ const { ipcRenderer } = electron;
 const bootstrap = require("bootstrap"); //required even though not called!!
 var $ = require("jquery");
 
+let columbusCol = "Columbus";
+let resilientCol = "Resilient";
+
 let youtubeData;
 let countries;
 
-//const mappa = new Mappa('Leaflet');
-const mappa = new Mappa("Google", "AIzaSyAiflBlS2ROLUrwGHvCl3mMRT2GX-kUwJ4");
+const mappa = new Mappa('Leaflet');
+//const mappa = new Mappa("Google", "AIzaSyAiflBlS2ROLUrwGHvCl3mMRT2GX-kUwJ4");
 let myMap;
 let initiated = false;
 let canvas;
@@ -26,8 +29,8 @@ let data;
 let options = {
   lat: 52.9271382,
   lng: -1.1862859,
-  zoom: 6//,
-  //style: "http://{s}.tile.osm.org/{z}/{x}/{y}.png"
+  zoom: 6,
+  style: "http://{s}.tile.osm.org/{z}/{x}/{y}.png"
 };
 
 ipcRenderer.on("mapMyData", function(e, dataIn) {
@@ -44,6 +47,7 @@ ipcRenderer.on("mapMyData", function(e, dataIn) {
   myMap.onChange(mapUpdate);
   initiated = true;
   console.log(myMap);
+
 });
 
 window.onresize = function() {
@@ -76,16 +80,70 @@ function mapUpdate(){
     for (let record of data) {
       if (record.Latitude && record.Longitude) {
 
-        let pix = myMap.latLngToPixel(record.Latitude, record.Longitude);
-        fill(frameCount % 255, 0, 200, 100);
-        let zoom = myMap.zoom();
-        ellipse(pix.x, pix.y, (4 + zoom) / 2);
+        drawPoint(record);
 
       }
     }
 }
-function draw(){
+function drawPoint(record, highlighted){
+  let pix = myMap.latLngToPixel(record.Latitude, record.Longitude);
+  let zoom = myMap.zoom();
+  let baseSize = 8;
 
+  if(record[resilientCol] == "TRUE"){
+    stroke(0, 255, 0);
+  } else {
+    stroke(255, 0, 0);
+  }
+  if(record['whitelist'] == "ALLOW"){
+    fill(255, 255, 255);
+  }else if(record['whitelist'] == "DENY") {
+    fill(0, 0, 0);
+  } else {
+    fill(127, 127, 127);
+  }
+  
+  // if(highlighted){
+  //   fill(255, 255, 255);
+  //   stroke(0, 0, 0);
+  // }
+
+  if(record['user_selected']){
+    ellipse(pix.x, pix.y, (baseSize + zoom) / 2);
+  } else {
+    rectMode(CENTER);
+    rect(pix.x, pix.y, (baseSize + zoom) / 2, (baseSize + zoom) / 2);
+  }
+
+  if(record[columbusCol] == "TRUE"){
+    noStroke();
+    if(record[resilientCol] == "TRUE"){
+      fill(0, 255, 0);
+    } else {
+      fill(255, 0, 0);
+    }
+    textAlign(CENTER, CENTER);
+    text("C",pix.x, pix.y)
+  }
+  
+}
+
+function draw(){
+  if (initiated && data) {
+  let zoom = myMap.zoom();
+  for (let record of data) {
+    if (record.Latitude && record.Longitude) {
+      let pix = myMap.latLngToPixel(record.Latitude, record.Longitude);
+      if (dist(mouseX, mouseY, pix.x, pix.y) <= (4 + zoom) / 4) {
+        console.log("Close to: " + record.property_name);
+        drawPoint(record, true);
+      } else {
+      drawPoint(record, false);
+      }
+    }
+  }
+  }
+  
 }
 
 // function draw() {
