@@ -120,7 +120,8 @@ ipcMain.on('spawnMap', function (e,data){
   mapWin.loadURL(
     url.format({
       //pathname: path.join(__dirname, "map","index.html"),
-      pathname: path.join(__dirname, "leaf","leaf.html"),
+      //pathname: path.join(__dirname, "leaf","leaf.html"),
+      pathname: path.join(__dirname, "google","google.html"),
       protocol: "file:",
       slashes: true
     })
