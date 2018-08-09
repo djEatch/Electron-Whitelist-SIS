@@ -51,12 +51,33 @@ function toggleSelect(e) {
   for (record of sqlResults.recordset) {
     if (record.Property_id == storenum) {
       record.user_selected = !record.user_selected;
-      for (marker of markers) {
-        if (marker.data.Property_id == record.Property_id) {
-          marker.data.user_selected = record.user_selected;
-          animate(marker);
-        }
-      }
+      // for (marker of markers) {
+      //   if (marker.data.Property_id == record.Property_id) {
+      //     marker.data.user_selected = record.user_selected;
+      //     animate(marker);
+
+      //     for(info of infowindows){
+      //       if(info.id == record.Property_id){
+      //         info.content = record.Property_id +
+      //         " - " +
+      //         record.property_name +
+      //         "<br>Resilient: " +
+      //         record.Resilient +
+      //         "<br>Columbus: " +
+      //         record.Columbus +
+      //         '<br>Selected: ' + record.user_selected + ' <button value="' +
+      //         record.Property_id +
+      //         '" onclick="toggleSelect(this);closeInfowindow(this);">Toggle</button>';
+      //         marker.addListener("click", function() {
+      //           info.open(gmap, marker);
+      //         });
+      //         break;
+      //       }
+      //     }
+      //     break;
+      //   }
+      // }
+      break;
     }
   }
   console.log(sqlResults);
@@ -81,6 +102,9 @@ function animate(marker) {
 }
 
 function drawGoogleMarkers() {
+  for(marker of markers){
+    marker.setMap(null);
+  }
   markers = [];
   infowindows = [];
   //let data = sqlResults.recordset
@@ -102,9 +126,9 @@ function drawGoogleMarkers() {
             record.Resilient +
             "<br>Columbus: " +
             record.Columbus +
-            '<button value="' +
+            '<br>Selected: ' + record.user_selected + ' <button value="' +
             record.Property_id +
-            '" onclick="toggleSelect(this);closeInfowindow(this)">Click me</button>',
+            '" onclick="toggleSelect(this);closeInfowindow(this);drawGoogleMarkers()">Toggle</button>',
           id: record.Property_id
         });
 
@@ -124,7 +148,7 @@ function drawGoogleMarkers() {
           //   scale: 1.25,
           //   labelOrigin: new google.maps.Point(0, -28)
           // },
-          map: gmap
+          //map: gmap
         });
 
         marker.addListener("click", function() {
@@ -133,9 +157,13 @@ function drawGoogleMarkers() {
         markers.push(marker);
         infowindows.push(infowindow);
         //console.log(marker);
-        animate(marker);
+        
       }
     }
+  }
+  for(marker of markers){
+    marker.setMap(gmap);
+    animate(marker);
   }
 }
 
