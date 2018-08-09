@@ -5,8 +5,15 @@ var $ = require("jquery");
 
 var uluru = { lat: -25.344, lng: 131.036 };
 
+let currentMode;
+let currentFilters;
+
+let sqlResults;
+
 // The map, centered at Uluru
 let gmap;
+let markers = [];
+let infowindows = [];
 
 let options = {
   lat: 52.9271382,
@@ -15,11 +22,15 @@ let options = {
   style: "http://{s}.tile.osm.org/{z}/{x}/{y}.png"
 };
 
-ipcRenderer.on("mapMyData", function(e, dataIn) {
-  data = dataIn;
-  console.log(data);
-  if (data.length > 0) {
-    let centrePoint = getAverageLocation(data);
+ipcRenderer.on("mapMyData", function(e, dataIn, mode, filters) {
+  currentMode = mode;
+  currentFilters = filters;
+  sqlResults = dataIn;
+  console.log(sqlResults);
+  // let data = sqlResults.recordset
+  // console.log(data);
+  if (sqlResults.recordset.length > 0) {
+    let centrePoint = getAverageLocation(sqlResults.recordset);
     options.lat = centrePoint.lat;
     options.lng = centrePoint.lng;
   }
@@ -30,30 +41,100 @@ ipcRenderer.on("mapMyData", function(e, dataIn) {
   });
   drawGoogleMarkers();
   //var marker = new google.maps.Marker({position: test, map: map});
-  console.log(gmap);
+  //console.log(gmap);
+  //console.log(markers);
 });
 
+function toggleSelect(e) {
+  let storenum = e.value;
+  //let data = sqlResults.recordset
+  for (record of sqlResults.recordset) {
+    if (record.Property_id == storenum) {
+      record.user_selected = !record.user_selected;
+      for (marker of markers) {
+        if (marker.data.Property_id == record.Property_id) {
+          marker.data.user_selected = record.user_selected;
+          animate(marker);
+        }
+      }
+    }
+  }
+  console.log(sqlResults);
+  ipcRenderer.send("selectedFromMap", sqlResults);
+}
+
+function closeInfowindow(e) {
+  let storenum = e.value;
+  for (info of infowindows) {
+    if (info.id == storenum) {
+      info.close();
+    }
+  }
+}
+
+function animate(marker) {
+  if (marker.data.user_selected) {
+    marker.setAnimation(google.maps.Animation.BOUNCE);
+  } else {
+    marker.setAnimation(null);
+  }
+}
+
 function drawGoogleMarkers() {
-  for (record of data) {
+  markers = [];
+  infowindows = [];
+  //let data = sqlResults.recordset
+  for (record of sqlResults.recordset) {
     if (record.Latitude && record.Longitude) {
-      let infowindow = new google.maps.InfoWindow({
-        content: record.property_name
-      });
+      if (
+        currentMode == "ALL" ||
+        (currentMode == "SELECTED" && record.user_selected) ||
+        (currentMode == "FILTERED" &&
+          ((record.Columbus == "TRUE" || !currentFilters.ChkColOnly) &&
+            (record.Resilient == "TRUE" || !currentFilters.ChkResOnly)))
+      ) {
+        let infowindow = new google.maps.InfoWindow({
+          content:
+            record.Property_id +
+            " - " +
+            record.property_name +
+            "<br>Resilient: " +
+            record.Resilient +
+            "<br>Columbus: " +
+            record.Columbus +
+            '<button value="' +
+            record.Property_id +
+            '" onclick="toggleSelect(this);closeInfowindow(this)">Click me</button>',
+          id: record.Property_id
+        });
 
-      let marker = new google.maps.Marker({
-        position: {
-          lat: parseFloat(record.Latitude),
-          lng: parseFloat(record.Longitude)
-        },
-        //label: record.property_name,
-        map: gmap
-      });
+        let marker = new google.maps.Marker({
+          data: record,
+          position: {
+            lat: parseFloat(record.Latitude),
+            lng: parseFloat(record.Longitude)
+          },
+          //label: "A",//String(record.Property_id),
+          //icon: 'http://maps.google.com/mapfiles/ms/icons/green.png',
+          // icon: {
+          //   path: 'M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z',//google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          //   fillColor:"green",
+          //   fillOpacity: 1,
+          //   strokeColor: "red",
+          //   scale: 1.25,
+          //   labelOrigin: new google.maps.Point(0, -28)
+          // },
+          map: gmap
+        });
 
-      marker.addListener("click", function() {
-        infowindow.open(gmap, marker);
-      });
-      
-      console.log(marker);
+        marker.addListener("click", function() {
+          infowindow.open(gmap, marker);
+        });
+        markers.push(marker);
+        infowindows.push(infowindow);
+        //console.log(marker);
+        animate(marker);
+      }
     }
   }
 }

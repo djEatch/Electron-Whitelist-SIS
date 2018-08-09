@@ -4,7 +4,7 @@ const bootstrap = require("bootstrap"); //required even though not called!!
 var $ = require("jquery");
 const sql = require("mssql");
 
-const sqlConfig = JSON.parse(electron.remote.getGlobal('sqlConfigString'));
+const sqlConfig = JSON.parse(electron.remote.getGlobal("sqlConfigString"));
 
 let jmxUsers = [];
 let currentJMXuser;
@@ -14,8 +14,25 @@ let resilientList = [];
 
 let columbusCol = "Columbus";
 let resilientCol = "Resilient";
+let selectCol = "user_selected";
 let sqlResults;
-const columnsToShow = []
+const columnsToShow = [
+  "Property_id",
+  "property_name",
+  "division_id",
+  "region_id",	
+  "customer_area_id",
+  "format",
+  "trading_format",
+  "store_origin",
+  "property_type",
+  "SAG",
+  "Latitude",
+  "Longitude",
+  columbusCol,
+  resilientCol,	
+  selectCol
+];
 
 let sortOptions = { currentField: null, currentDir: -1 };
 
@@ -42,20 +59,9 @@ getMasterData();
 
 // function fudgeFunction() {
 //   console.log("Clicked");
-//   //whatDoesLBThinkOfThisServer(serverList[6]);
-//   //makeModal();
-//   //$('#collapseThree').collapse('hide')
-//   //ipcRenderer.send('popup', {hostname:"blah", endpoint:"hghg", port:"121222", response:"hfksjdhf kdjhaksjh akahsdkjashdak dsf"});
-//   //ipcRenderer.send('showServerWindow',serverList);
-//   //ipcRenderer.send("getFilterLists");
-//   // thing = document.querySelector("#modalJMXpara")
-//   // thing.innerHTML="TEXT FROM FUDGE"
-//   // $("#jmxLoginModalDiv").modal("show");
-//   // sqlConnect();
 // }
 
 async function getMasterData() {
-
   let pool = await sql.connect(sqlConfig);
   let request = new sql.Request();
   request.multiple = true;
@@ -63,8 +69,10 @@ async function getMasterData() {
   await request.query(
     "SELECT * from dbo.t_division;SELECT * from dbo.t_region;SELECT * from dbo.t_area;select * from dbo.t_SAG;SELECT distinct [trading_format] FROM dbo.T_PROPERTY;SELECT distinct [property_type] FROM dbo.T_PROPERTY;",
     (err, result) => {
-
-      if(err) {console.log(err);return;};
+      if (err) {
+        console.log(err);
+        return;
+      }
       masterData = result;
 
       //sql.close();
@@ -139,16 +147,16 @@ async function getMasterData() {
   );
 }
 
-async function sqlQuery(queryString) {
-  try {
-    let pool = await sql.connect(sqlConfig);
-    let result = await sql.query`${queryString}`; //`SELECT TOP 100 * from dbo.t_division`
-    await sql.close();
-    return result.recordset;
-  } catch (err) {
-    console.log(err);
-  }
-}
+// async function sqlQuery(queryString) {
+//   try {
+//     let pool = await sql.connect(sqlConfig);
+//     let result = await sql.query`${queryString}`; //`SELECT TOP 100 * from dbo.t_division`
+//     await sql.close();
+//     return result.recordset;
+//   } catch (err) {
+//     console.log(err);
+//   }
+// }
 
 function resetSort() {
   sortOptions = { currentField: null, currentDir: -1 };
@@ -199,10 +207,11 @@ ipcRenderer.on("setFilterLists", function(e, _columbusList, _resilientList) {
   columbusList = _columbusList;
   resilientList = _resilientList;
   let sqlQuery = buildSQLQueryString();
-  getSQLResults(sqlQuery)
-    .then(results => {sqlResults = results;addExternalData(sqlResults);drawTableFromSQL()})
-  //console.log(sqlResults);
-  // drawTableFromArray(sqlResults);
+  getSQLResults(sqlQuery).then(results => {
+    sqlResults = results;
+    addExternalData(sqlResults);
+    drawTableFromSQL();
+  });
 });
 
 async function getSQLResults(sqlQuery) {
@@ -211,19 +220,16 @@ async function getSQLResults(sqlQuery) {
   let pool = await sql.connect(sqlConfig);
   let request = new sql.Request();
 
-  // results = await request.query(
-  //   "SELECT TOP 10 * FROM [Property].[dbo].[T_PROPERTY] p left join [Property].[dbo].[T_SAG] s on p.sq_metres >= s.lower_limit and  p.sq_metres <= s.upper_limit ;").then((result) => {
-  //       return result;
-  //   });
-
-  return await request.query(
-    "SELECT p.Property_id, p.property_name, p.division_id, p.region_id, p.customer_area_id,p.format, p.trading_format, p.store_origin, p.property_type, s.SAG  , tsa1.value_text as 'Latitude', tsa2.value_text as 'Longitude'  FROM [Property].[dbo].[T_PROPERTY] p left join [Property].[dbo].[T_SAG] s on p.sq_metres >= s.lower_limit and  p.sq_metres <= s.upper_limit " +
-    "left join t_store_attribute tsa1 on tsa1.store_number = p.property_id and tsa1.attribute_id = 39" +
-    "left join t_store_attribute tsa2 on tsa2.store_number = p.property_id and tsa2.attribute_id = 40" +
-    sqlQuery +
-    ";"
-    ).then((result) => {
-        return result;
+  return await request
+    .query(
+      "SELECT p.Property_id, p.property_name, p.division_id, p.region_id, p.customer_area_id,p.format, p.trading_format, p.store_origin, p.property_type, s.SAG  , tsa1.value_text as 'Latitude', tsa2.value_text as 'Longitude'  FROM [Property].[dbo].[T_PROPERTY] p left join [Property].[dbo].[T_SAG] s on p.sq_metres >= s.lower_limit and  p.sq_metres <= s.upper_limit " +
+        "left join t_store_attribute tsa1 on tsa1.store_number = p.property_id and tsa1.attribute_id = 39" +
+        "left join t_store_attribute tsa2 on tsa2.store_number = p.property_id and tsa2.attribute_id = 40" +
+        sqlQuery +
+        ";"
+    )
+    .then(result => {
+      return result;
     });
 
   // console.log(results);
@@ -231,13 +237,13 @@ async function getSQLResults(sqlQuery) {
   // return results;
 }
 
-function addExternalData(resultSet){
+function addExternalData(resultSet) {
   console.log(resultSet);
-  for (result of resultSet.recordset){
+  for (result of resultSet.recordset) {
     result[columbusCol] = "FALSE";
     result[resilientCol] = "FALSE";
 
-    let storeNum = toFourDigits(result['Property_id']);
+    let storeNum = toFourDigits(result["Property_id"]);
     for (site of columbusList) {
       if (site == storeNum) {
         result[columbusCol] = "TRUE";
@@ -251,12 +257,11 @@ function addExternalData(resultSet){
       }
     }
   }
-
 }
 
 function drawTableFromSQL() {
   //filterButton
-  //console.log(sqlResults);
+  console.log(sqlResults);
   let table = document.createElement("table");
   table.classList = "table table-light table-hover";
 
@@ -270,48 +275,56 @@ function drawTableFromSQL() {
   // Insert a new cell (<td>) at the first position of the "new" <tr> element:
   //console.log(Object.keys(sisResults[0]));
 
-  if (!sqlResults){return;}
-  if (sqlResults.recordset.length < 1){return;}
+  if (!sqlResults) {
+    return;
+  }
+  if (sqlResults.recordset.length < 1) {
+    return;
+  }
 
   for (element of Object.keys(sqlResults.recordset[0])) {
     let cell = row.insertCell();
     cell.innerHTML = "<b>" + element + "</b>";
   }
   let cell = row.insertCell();
-  cell.innerHTML = '<b>Select</b><input align="left" type="checkbox" name="chkSelect" onclick="toggleSelect(this.checked)">';
+  cell.innerHTML =
+    '<b>Select</b><input align="left" type="checkbox" name="chkSelect" onclick="toggleSelect(this.checked)">';
 
   let ChkColOnly = document.all.item("ChkColOnly");
   let ChkResOnly = document.all.item("ChkResOnly");
 
   for (result of sqlResults.recordset) {
-    if ((result[columbusCol] == "TRUE" || !ChkColOnly.checked) && (result[resilientCol]=="TRUE" || !ChkResOnly.checked)) {
+    if (
+      (result[columbusCol] == "TRUE" || !ChkColOnly.checked) &&
+      (result[resilientCol] == "TRUE" || !ChkResOnly.checked)
+    ) {
       let row = table.insertRow();
       let storenum;
       //console.log(result);
       Object.keys(result).map(function(objectKey, index) {
-        if (objectKey != "user_selected") {
-        var value = result[objectKey];
-        let cell = row.insertCell();
-        cell.innerHTML = value;
-        if (objectKey == "Property_id") {
-          storenum = value;
-          cell.addEventListener("click", () => {
-            console.log("clicked", value);
-          });
-        } 
-      }
+        if (objectKey != selectCol) {
+          var value = result[objectKey];
+          let cell = row.insertCell();
+          cell.innerHTML = value;
+          if (objectKey == "Property_id") {
+            storenum = value;
+            cell.addEventListener("click", () => {
+              console.log("clicked", value);
+            });
+          }
+        }
       });
       let cell = row.insertCell();
       let chk = document.createElement("input");
       chk.type = "checkbox";
       chk.id = "chk_" + storenum;
-      chk.name = "chkGroup"
+      chk.name = "chkGroup";
       chk.value = storenum;
       chk.addEventListener("click", () => {
         selectStore(storenum, chk.checked);
       });
-      if (result['user_selected']){
-      chk.checked = result['user_selected'];
+      if (result[selectCol]) {
+        chk.checked = result[selectCol];
       } else {
         chk.checked = false;
       }
@@ -325,64 +338,34 @@ function drawTableFromSQL() {
   tableDiv.appendChild(table);
 }
 
-function selectStore(num, ticked){
-
-  for (result of sqlResults.recordset){
-    if (result['Property_id'] == num){
-      result['user_selected']= ticked;
+function selectStore(num, ticked) {
+  for (result of sqlResults.recordset) {
+    if (result["Property_id"] == num) {
+      result[selectCol] = ticked;
     }
   }
 }
 
-function toggleSelect(ticked){
+function toggleSelect(ticked) {
   console.log(ticked);
-  checkboxes = document.getElementsByName('chkGroup');
-  for(var checkbox of checkboxes){
+  checkboxes = document.getElementsByName("chkGroup");
+  for (var checkbox of checkboxes) {
     checkbox.checked = ticked;
   }
-  for (result of sqlResults.recordset){
-      result['user_selected'] = ticked;
+  for (result of sqlResults.recordset) {
+    result[selectCol] = ticked;
   }
 }
 
-function mapResults(mapMode){
-let records = [];
-  switch(mapMode){
-    case "ALL":{
-      console.log("ALL");
-      records = sqlResults.recordset;
-      break;
-    }
-    case "FILTERED":{
-      console.log("FILTERED")
-      let ChkColOnly = document.all.item("ChkColOnly");
-      let ChkResOnly = document.all.item("ChkResOnly");
-      records = sqlResults.recordset.filter(function(item) {
-        return ((item[columbusCol] == "TRUE" || !ChkColOnly.checked) && (item[resilientCol]=="TRUE" || !ChkResOnly.checked));
-      })
-      break;
-    }
-    case "SELECTED":{
-      console.log("SELECTED")
-      checkboxes = document.getElementsByName('chkGroup');
-      for(var checkbox of checkboxes){
-        if(checkbox.checked){
-          for (record of sqlResults.recordset ){
-            if(record.Property_id == checkbox.value){
-              records.push(record);
-            }
-          }
-        }
-      }
-      break;
-    }
-    default : {
-      return;
-    }
-  }
-  
-  ipcRenderer.send('spawnMap', records);
-
+function mapResults(mapMode) {
+  //let records = [];
+  //let records = sqlResults.recordset;
+  let filters = {
+    ChkColOnly: document.all.item("ChkColOnly").checked,
+    ChkResOnly: document.all.item("ChkResOnly").checked
+  };
+  //ipcRenderer.send('spawnMap', records,mapMode,filters);
+  ipcRenderer.send("spawnMap", sqlResults, mapMode, filters);
 }
 
 function jmxLogin(e, u, p) {
@@ -421,33 +404,6 @@ function showJMXLoginModal(_envName, _action, _server) {
     JSON.stringify(_server)
   );
   $("#jmxLoginModalDiv").modal("show");
-}
-
-function humanEnvName(envText) {
-  switch (envText.toLowerCase()) {
-    case "f00":
-      return "FT1";
-    case "f10":
-      return "FT2";
-    case "f20":
-      return "FT3";
-    case "f30":
-      return "FT4";
-    case "f40":
-      return "FT5";
-    case "i00":
-      return "IT1";
-    case "i10":
-      return "IT2";
-    case "i20":
-      return "IT3";
-    case "i30":
-      return "IT4";
-    case "i40":
-      return "IT5";
-    default:
-      return envText;
-  }
 }
 
 function buildSQLQueryString() {
@@ -506,9 +462,9 @@ function buildSQLQueryString() {
 
   if (ChkClosed.checked) {
     let closedOptions = document.all.item("ClosedList").options;
-    let closedValues = []
+    let closedValues = [];
     for (let item of closedOptions) {
-      if(item.selected) {
+      if (item.selected) {
         closedValues.push("'" + item.value + "'");
       }
     }
@@ -528,123 +484,6 @@ function buildSQLQueryString() {
 
   console.log(queryString);
   return queryString;
-}
-
-function buildQueryString() {
-  //let ChkProperty = document.all.item("ChkProperty")
-  //console.log(ChkProperty.checked);
-  let ChkDivision = document.all.item("ChkDivision");
-  let divisionValue = encodeURI(
-    document.all.item("DivisionList").value.replace("&", "amp;")
-  ); //."14-London";
-  let divisionString = `divisionIndex=5&divisionValue=${divisionValue}`;
-  let ChkRegion = document.all.item("ChkRegion");
-  let regionValue = encodeURI(
-    document.all.item("RegionList").value.replace("&", "amp;")
-  ); //"10-Airports";
-  let regionString = `regionIndex=6&regionValue=${regionValue}`;
-  let ChkArea = document.all.item("ChkArea");
-  let areaValue = encodeURI(
-    document.all.item("CAList").value.replace("&", "amp;")
-  ); //"311-Heathrow%20Airport";
-  let areaString = `areaIndex=7&areaValue=${areaValue}`;
-  let ChkFormat = document.all.item("ChkFormat");
-  let formatValue = encodeURI(
-    document.all.item("FormatList").value.replace("&", "amp;")
-  ); //"AIRPORT";
-  let formatString = `formatIndex=8&formatValue=${formatValue}`;
-  let ChkSAG = document.all.item("ChkSAG");
-  let sagValue = encodeURI(
-    document.all.item("SAGList").value.replace("&", "amp;")
-  ); //"A";
-  let sagString = `sagIndex=9&sagValue=${sagValue}`;
-
-  let outputString = "?";
-  if (ChkDivision.checked) {
-    console.log(outputString);
-    outputString += divisionString + "&";
-    console.log(outputString);
-  }
-  if (ChkRegion.checked) {
-    outputString += regionString + "&";
-  }
-  if (ChkArea.checked) {
-    outputString += areaString + "&";
-  }
-  if (ChkFormat.checked) {
-    outputString += formatString + "&";
-  }
-  if (ChkSAG.checked) {
-    outputString += sagString + "&";
-  }
-
-  // if(outputString.length > 1){
-  //   outputString = outputString.substr(0,outputString.length - 1)
-  // }
-
-  console.log(outputString);
-  return outputString;
-}
-
-function gotDetailResults(resp, id) {
-  let parser = new DOMParser();
-  let reply = parser.parseFromString(resp, "text/html");
-  let inTable = reply.getElementById("MainTable");
-  console.log(inTable);
-  let details = detailsToArray(inTable);
-  console.log(details);
-}
-
-function getStoreDetail(storeNum) {
-  //let storeNum = parseInt(_storeNum,10);
-  console.log(storeNum);
-  let url =
-    "http://www.webapp2.int.boots.com/property/Reports/repProperty-GeneralDetail.asp?PropID=" +
-    storeNum;
-  getRequest(gotDetailResults, url, storeNum);
-}
-
-function drawTableFromArray(resultSet) {
-  let table = document.createElement("table");
-  table.classList = "table table-light table-hover";
-
-  // Create an empty <thead> element and add it to the table:
-  var header = table.createTHead();
-  header.classList = "thead-dark";
-
-  // Create an empty <tr> element and add it to the first position of <thead>:
-  var row = header.insertRow(0);
-
-  // Insert a new cell (<td>) at the first position of the "new" <tr> element:
-  //console.log(Object.keys(sisResults[0]));
-  for (element of Object.keys(resultSet[0])) {
-    let cell = row.insertCell();
-    cell.innerHTML = "<b>" + element + "</b>";
-  }
-
-  for (result of resultSet) {
-    if (result[columbusCol] == "TRUE") {
-      let row = table.insertRow();
-      //console.log(result);
-      Object.keys(result).map(function(objectKey, index) {
-        var value = result[objectKey];
-        let cell = row.insertCell();
-        cell.innerHTML = value;
-        if (objectKey == "Store Number") {
-          cell.addEventListener("click", () => {
-            console.log("clicked", value);
-            getStoreDetail(value);
-            //ipcRenderer.send('popup',server);
-          });
-        }
-      });
-      row.className = "table-info";
-    }
-  }
-
-  let tableDiv = document.getElementById("TableDiv");
-  tableDiv.innerHTML = "";
-  tableDiv.appendChild(table);
 }
 
 function toFourDigits(_storeNum) {
@@ -883,6 +722,12 @@ class JMXUser {
 
 ipcRenderer.on("initPageContent", function() {
   initPageContent();
+});
+
+ipcRenderer.on("refreshFromMap", function(e, _data) {
+  //sqlResults.recordset = _data;
+  sqlResults = _data;
+  drawTableFromSQL();
 });
 
 function initPageContent() {
