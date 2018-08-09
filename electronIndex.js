@@ -282,13 +282,16 @@ function drawTableFromSQL() {
     return;
   }
 
-  for (element of Object.keys(sqlResults.recordset[0])) {
+  for (element of columnsToShow) {
     let cell = row.insertCell();
-    cell.innerHTML = "<b>" + element + "</b>";
+    if(element != selectCol){
+      cell.innerHTML = "<b>" + element + "</b>";
+    } else {
+      cell.innerHTML =
+      '<b>Select</b><input align="left" type="checkbox" name="chkSelect" onclick="toggleSelect(this.checked)">';
+    }
   }
-  let cell = row.insertCell();
-  cell.innerHTML =
-    '<b>Select</b><input align="left" type="checkbox" name="chkSelect" onclick="toggleSelect(this.checked)">';
+
 
   let ChkColOnly = document.all.item("ChkColOnly");
   let ChkResOnly = document.all.item("ChkResOnly");
@@ -301,19 +304,20 @@ function drawTableFromSQL() {
       let row = table.insertRow();
       let storenum;
       //console.log(result);
-      Object.keys(result).map(function(objectKey, index) {
-        if (objectKey != selectCol) {
-          var value = result[objectKey];
+      for(col of columnsToShow) {
+        if (col != selectCol) {
+          var value = result[col];
           let cell = row.insertCell();
           cell.innerHTML = value;
-          if (objectKey == "Property_id") {
+          if (col == "Property_id") {
             storenum = value;
             cell.addEventListener("click", () => {
               console.log("clicked", value);
             });
           }
         }
-      });
+      }
+
       let cell = row.insertCell();
       let chk = document.createElement("input");
       chk.type = "checkbox";
