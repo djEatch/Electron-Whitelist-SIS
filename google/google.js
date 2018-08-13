@@ -3,33 +3,27 @@ const { ipcRenderer } = electron;
 const bootstrap = require("bootstrap"); //required even though not called!!
 var $ = require("jquery");
 
-var uluru = { lat: -25.344, lng: 131.036 };
-
-
 let currentMode;
 let currentFilters;
 
 let sqlResults;
 
-// The map, centered at Uluru
+
 let gmap;
 let markers = [];
 let infowindows = [];
 
 let options = {
-  lat: 52.9271382,
-  lng: -1.1862859,
-  zoom: 6,
-  style: "http://{s}.tile.osm.org/{z}/{x}/{y}.png"
+  lat: 52.9271382, //D90
+  lng: -1.1862859, //D90
+  zoom: 6//,
+  //style: "http://{s}.tile.osm.org/{z}/{x}/{y}.png" - not required for google maps
 };
 
 ipcRenderer.on("mapMyData", function(e, dataIn, mode, filters) {
   currentMode = mode;
   currentFilters = filters;
   sqlResults = dataIn;
-  console.log(sqlResults);
-  // let data = sqlResults.recordset
-  // console.log(data);
   if (sqlResults.recordset.length > 0) {
     let centrePoint = getAverageLocation(sqlResults.recordset);
     options.lat = centrePoint.lat;
@@ -46,21 +40,16 @@ ipcRenderer.on("mapMyData", function(e, dataIn, mode, filters) {
     center: { lat: options.lat, lng: options.lng }
   });
   drawGoogleMarkers();
-  //var marker = new google.maps.Marker({position: test, map: map});
-  //console.log(gmap);
-  //console.log(markers);
 });
 
 function toggleSelect(e) {
   let storenum = e.value;
-  //let data = sqlResults.recordset
   for (record of sqlResults.recordset) {
     if (record.Property_id == storenum) {
       record.user_selected = !record.user_selected;
       break;
     }
   }
-  console.log(sqlResults);
   ipcRenderer.send("selectedFromMap", sqlResults);
 }
 
@@ -87,7 +76,6 @@ function drawGoogleMarkers() {
   }
   markers = [];
   infowindows = [];
-  //let data = sqlResults.recordset
   for (record of sqlResults.recordset) {
     if (record.Latitude && record.Longitude) {
       if (
@@ -178,8 +166,6 @@ function drawGoogleMarkers() {
         });
         markers.push(marker);
         infowindows.push(infowindow);
-        //console.log(marker);
-        
       }
     }
   }
@@ -206,51 +192,3 @@ function getAverageLocation(locationData) {
 
   return { lat: totalLat / countLat, lng: totalLon / countLon };
 }
-
-
-// let markerWhiteGreenCross = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path><path d="M24.75 19.91L33.23 28.14L28.48 32.74L20 24.51L11.52 32.74L6.77 28.14L15.25 19.91L6.77 11.68L11.52 7.07L20 15.3L28.48 7.07L33.23 11.68L24.75 19.91Z" id="a7IBIBDBMl"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="'+ selectedBackground +'" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#d6e3e0" stroke-width="2" stroke-opacity="1"></use></g></g><g><use xlink:href="#a7IBIBDBMl" opacity="1" fill="#e13030" fill-opacity="1"></use><g><use xlink:href="#a7IBIBDBMl" opacity="1" fill-opacity="0" stroke="#e15c62" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>';
-// let markerWhiteGreenTick = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path><path d="M21.73 28.01L21.73 28.01L16.74 33.15L7.5 23.64L12.49 18.5L16.74 22.88L29.43 9.82L34.42 14.96L21.73 28.01Z" id="a3xD1n0qa"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#38a71b" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#d6e3e0" stroke-width="2" stroke-opacity="1"></use></g></g><g><use xlink:href="#a3xD1n0qa" opacity="1" fill="'+ tickFill +'" fill-opacity="1"></use><g><use xlink:href="#a3xD1n0qa" opacity="1" fill-opacity="0" stroke="#d1e0dd" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>';
-// let markerWhiteGreenBlank = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#38a71b" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#d6e3e0" stroke-width="2" stroke-opacity="1"></use></g></g><g id="a40OuMUeUo"><use xlink:href="#b2bfvA2Xln" opacity="1" fill="#e07400" fill-opacity="1"></use><g><use xlink:href="#b2bfvA2Xln" opacity="1" fill-opacity="0" stroke="#d1e0dd" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>`;
-// let markerWhiteRedCross = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path><path d="M24.75 19.91L33.23 28.14L28.48 32.74L20 24.51L11.52 32.74L6.77 28.14L15.25 19.91L6.77 11.68L11.52 7.07L20 15.3L28.48 7.07L33.23 11.68L24.75 19.91Z" id="a7IBIBDBMl"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#712929" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#d6e3e0" stroke-width="2" stroke-opacity="1"></use></g></g><g><use xlink:href="#a7IBIBDBMl" opacity="1" fill="#e13030" fill-opacity="1"></use><g><use xlink:href="#a7IBIBDBMl" opacity="1" fill-opacity="0" stroke="#e15c62" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>';
-// let markerWhiteRedTick = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path><path d="M21.73 28.01L21.73 28.01L16.74 33.15L7.5 23.64L12.49 18.5L16.74 22.88L29.43 9.82L34.42 14.96L21.73 28.01Z" id="a3xD1n0qa"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#712929" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#d6e3e0" stroke-width="2" stroke-opacity="1"></use></g></g><g><use xlink:href="#a3xD1n0qa" opacity="1" fill="#1b9fa7" fill-opacity="1"></use><g><use xlink:href="#a3xD1n0qa" opacity="1" fill-opacity="0" stroke="#d1e0dd" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>';
-// let markerWhiteRedBlank = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#712929" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#d6e3e0" stroke-width="2" stroke-opacity="1"></use></g></g><g id="a40OuMUeUo"><use xlink:href="#b2bfvA2Xln" opacity="1" fill="#e07400" fill-opacity="1"></use><g><use xlink:href="#b2bfvA2Xln" opacity="1" fill-opacity="0" stroke="#d1e0dd" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>`;
-// let markerWhiteBlueCross = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path><path d="M24.75 19.91L33.23 28.14L28.48 32.74L20 24.51L11.52 32.74L6.77 28.14L15.25 19.91L6.77 11.68L11.52 7.07L20 15.3L28.48 7.07L33.23 11.68L24.75 19.91Z" id="a7IBIBDBMl"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#122c95" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#d6e3e0" stroke-width="2" stroke-opacity="1"></use></g></g><g><use xlink:href="#a7IBIBDBMl" opacity="1" fill="#e13030" fill-opacity="1"></use><g><use xlink:href="#a7IBIBDBMl" opacity="1" fill-opacity="0" stroke="#e15c62" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>';
-// let markerWhiteBlueTick = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path><path d="M21.73 28.01L21.73 28.01L16.74 33.15L7.5 23.64L12.49 18.5L16.74 22.88L29.43 9.82L34.42 14.96L21.73 28.01Z" id="a3xD1n0qa"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#122c95" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#d6e3e0" stroke-width="2" stroke-opacity="1"></use></g></g><g><use xlink:href="#a3xD1n0qa" opacity="1" fill="#1b9fa7" fill-opacity="1"></use><g><use xlink:href="#a3xD1n0qa" opacity="1" fill-opacity="0" stroke="#d1e0dd" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>';
-// let markerWhiteBlueBlank = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#122c95" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#d6e3e0" stroke-width="2" stroke-opacity="1"></use></g></g><g id="a40OuMUeUo"><use xlink:href="#b2bfvA2Xln" opacity="1" fill="#e07400" fill-opacity="1"></use><g><use xlink:href="#b2bfvA2Xln" opacity="1" fill-opacity="0" stroke="#d1e0dd" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>`;
-
-
-
-// let markerBlackGreenCross = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path><path d="M24.75 19.91L33.23 28.14L28.48 32.74L20 24.51L11.52 32.74L6.77 28.14L15.25 19.91L6.77 11.68L11.52 7.07L20 15.3L28.48 7.07L33.23 11.68L24.75 19.91Z" id="a7IBIBDBMl"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#38a71b" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#000000" stroke-width="2" stroke-opacity="1"></use></g></g><g><use xlink:href="#a7IBIBDBMl" opacity="1" fill="#e13030" fill-opacity="1"></use><g><use xlink:href="#a7IBIBDBMl" opacity="1" fill-opacity="0" stroke="#e15c62" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>';
-// let markerBlackGreenTick = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path><path d="M21.73 28.01L21.73 28.01L16.74 33.15L7.5 23.64L12.49 18.5L16.74 22.88L29.43 9.82L34.42 14.96L21.73 28.01Z" id="a3xD1n0qa"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#38a71b" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#000000" stroke-width="2" stroke-opacity="1"></use></g></g><g><use xlink:href="#a3xD1n0qa" opacity="1" fill="#1b9fa7" fill-opacity="1"></use><g><use xlink:href="#a3xD1n0qa" opacity="1" fill-opacity="0" stroke="#d1e0dd" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>';
-// let markerBlackGreenBlank = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#38a71b" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#000000" stroke-width="2" stroke-opacity="1"></use></g></g><g id="a40OuMUeUo"><use xlink:href="#b2bfvA2Xln" opacity="1" fill="#e07400" fill-opacity="1"></use><g><use xlink:href="#b2bfvA2Xln" opacity="1" fill-opacity="0" stroke="#d1e0dd" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>`;
-// let markerBlackRedCross = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path><path d="M24.75 19.91L33.23 28.14L28.48 32.74L20 24.51L11.52 32.74L6.77 28.14L15.25 19.91L6.77 11.68L11.52 7.07L20 15.3L28.48 7.07L33.23 11.68L24.75 19.91Z" id="a7IBIBDBMl"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#712929" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#000000" stroke-width="2" stroke-opacity="1"></use></g></g><g><use xlink:href="#a7IBIBDBMl" opacity="1" fill="#e13030" fill-opacity="1"></use><g><use xlink:href="#a7IBIBDBMl" opacity="1" fill-opacity="0" stroke="#e15c62" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>';
-// let markerBlackRedTick = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path><path d="M21.73 28.01L21.73 28.01L16.74 33.15L7.5 23.64L12.49 18.5L16.74 22.88L29.43 9.82L34.42 14.96L21.73 28.01Z" id="a3xD1n0qa"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#712929" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#000000" stroke-width="2" stroke-opacity="1"></use></g></g><g><use xlink:href="#a3xD1n0qa" opacity="1" fill="#1b9fa7" fill-opacity="1"></use><g><use xlink:href="#a3xD1n0qa" opacity="1" fill-opacity="0" stroke="#d1e0dd" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>';
-// let markerBlackRedBlank = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#712929" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#000000" stroke-width="2" stroke-opacity="1"></use></g></g><g id="a40OuMUeUo"><use xlink:href="#b2bfvA2Xln" opacity="1" fill="#e07400" fill-opacity="1"></use><g><use xlink:href="#b2bfvA2Xln" opacity="1" fill-opacity="0" stroke="#d1e0dd" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>`;
-// let markerBlackBlueCross = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path><path d="M24.75 19.91L33.23 28.14L28.48 32.74L20 24.51L11.52 32.74L6.77 28.14L15.25 19.91L6.77 11.68L11.52 7.07L20 15.3L28.48 7.07L33.23 11.68L24.75 19.91Z" id="a7IBIBDBMl"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#122c95" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#000000" stroke-width="2" stroke-opacity="1"></use></g></g><g><use xlink:href="#a7IBIBDBMl" opacity="1" fill="#e13030" fill-opacity="1"></use><g><use xlink:href="#a7IBIBDBMl" opacity="1" fill-opacity="0" stroke="#e15c62" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>';
-// let markerBlackBlueTick = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path><path d="M21.73 28.01L21.73 28.01L16.74 33.15L7.5 23.64L12.49 18.5L16.74 22.88L29.43 9.82L34.42 14.96L21.73 28.01Z" id="a3xD1n0qa"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#122c95" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#000000" stroke-width="2" stroke-opacity="1"></use></g></g><g><use xlink:href="#a3xD1n0qa" opacity="1" fill="#1b9fa7" fill-opacity="1"></use><g><use xlink:href="#a3xD1n0qa" opacity="1" fill-opacity="0" stroke="#d1e0dd" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>';
-// let markerBlackBlueBlank = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 55" width="40" height="55"><defs><path d="M39 19.65C39 9.35 30.49 1 20 1C9.51 1 1 9.35 1 19.65C1 29.95 9.51 38.3 20 54C30.49 38.3 39 29.95 39 19.65Z" id="d1ECZFYn7A"></path></defs><g><g><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill="#122c95" fill-opacity="1"></use><g><use xlink:href="#d1ECZFYn7A" opacity="1" fill-opacity="0" stroke="#000000" stroke-width="2" stroke-opacity="1"></use></g></g><g id="a40OuMUeUo"><use xlink:href="#b2bfvA2Xln" opacity="1" fill="#e07400" fill-opacity="1"></use><g><use xlink:href="#b2bfvA2Xln" opacity="1" fill-opacity="0" stroke="#d1e0dd" stroke-width="1" stroke-opacity="1"></use></g></g></g></g></svg>`;
-
-
-
-
-// let markerStyles = {
-// markerWhiteGreenCross,
-// markerWhiteGreenTick,
-// markerWhiteGreenBlank,
-// markerWhiteRedCross,
-// markerWhiteRedTick,
-// markerWhiteRedBlank,
-// markerWhiteBlueCross,
-// markerWhiteBlueTick,
-// markerWhiteBlueBlank,
-// markerBlackGreenCross,
-// markerBlackGreenTick,
-// markerBlackGreenBlank,
-// markerBlackRedCross,
-// markerBlackRedTick,
-// markerBlackRedBlank,
-// markerBlackBlueCross,
-// markerBlackBlueTick,
-// markerBlackBlueBlank,
-// }
-// console.log(markerStyles);
