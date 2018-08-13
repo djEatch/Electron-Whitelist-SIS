@@ -146,7 +146,7 @@ function drawGoogleMarkers() {
             lat: parseFloat(record.Latitude),
             lng: parseFloat(record.Longitude)
           },
-          //label: "A",//String(record.Property_id),
+          //label: String(record.Property_id),
           //icon: 'http://maps.google.com/mapfiles/ms/icons/green.png',
           icon: {
             //fillColor:"green",
@@ -155,8 +155,8 @@ function drawGoogleMarkers() {
             //strokeColor: "red",
             //scale: 0.1,
             //scaledSize: new google.maps.Size(30, 55),
-            anchor: new google.maps.Point(20, 53),
-            labelOrigin: new google.maps.Point(0, -28)
+            anchor: new google.maps.Point(20, 53)//,
+            //labelOrigin: new google.maps.Point(20, 20)
           },
           //map: gmap
         });
