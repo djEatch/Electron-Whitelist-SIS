@@ -111,7 +111,7 @@ function getFilterLists() {
   win.webContents.send("setFilterLists", columbusList, resilientList);
 }
 
-ipcMain.on('spawnMap', function (e,data){
+ipcMain.on('spawnMap', function (e,data,mode,filters){
   mapWin = new BrowserWindow({
     show: false,
     width: 800,
@@ -119,7 +119,9 @@ ipcMain.on('spawnMap', function (e,data){
   });
   mapWin.loadURL(
     url.format({
-      pathname: path.join(__dirname, "map","index.html"),
+      //pathname: path.join(__dirname, "map","index.html"),
+      //pathname: path.join(__dirname, "leaf","leaf.html"),
+      pathname: path.join(__dirname, "google","google.html"),
       protocol: "file:",
       slashes: true
     })
@@ -129,9 +131,14 @@ ipcMain.on('spawnMap', function (e,data){
   });
 
   mapWin.once("ready-to-show", () => {
-    mapWin.webContents.send("mapMyData", data);
+    mapWin.webContents.send("mapMyData", data,mode,filters);
     mapWin.show();
   });
+})
+
+
+ipcMain.on('selectedFromMap', function(e,data){
+  win.webContents.send("refreshFromMap",data);
 })
 
 // class MasterLB {
