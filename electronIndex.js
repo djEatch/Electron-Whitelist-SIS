@@ -6,6 +6,10 @@ const sql = require("mssql");
 
 const sqlConfig = JSON.parse(electron.remote.getGlobal("sqlConfigString"));
 
+const {clipboard} = require('electron');
+//clipboard.writeText('Example String');
+
+
 let jmxUsers = [];
 let currentJMXuser;
 let sisResults;
@@ -27,8 +31,8 @@ const columnsToShow = [
   "store_origin",
   "property_type",
   "SAG",
-  "Latitude",
-  "Longitude",
+  //"Latitude",
+  //"Longitude",
   columbusCol,
   resilientCol,	
   selectCol
@@ -370,6 +374,54 @@ function mapResults(mapMode) {
   };
   //ipcRenderer.send('spawnMap', records,mapMode,filters);
   ipcRenderer.send("spawnMap", sqlResults, mapMode, filters);
+}
+
+function exportResults(exportMode){
+  let outputString = "";
+  for (result of sqlResults.recordset){
+    if(result[selectCol]){
+    outputString += toFourDigits(result["Property_id"]) + ",";
+    }
+  }
+  if(outputString.length > 0){
+    outputString = outputString.slice(0,-1)
+
+    switch(exportMode){
+      case 'CLIP': {
+        clipboard.writeText(outputString);
+        break;
+      }
+      case 'SCREEN': {
+        ipcRenderer.send("showResultsWindow", outputString)
+        break;
+      }
+      case 'FILE':{
+        let outputFilename = "storelist.csv"
+        var file = new Blob([outputString], {type: "text"});
+        if (window.navigator.msSaveOrOpenBlob) // IE10+
+            window.navigator.msSaveOrOpenBlob(file, outputFilename);
+        else { // Others
+            var a = document.createElement("a"),
+                    url = URL.createObjectURL(file);
+            a.href = url;
+            a.download = outputFilename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function() {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);  
+            }, 0); 
+        }
+        break;
+      }
+      default:{
+        break;
+      }
+    }
+
+
+  }
+  console.log(outputString);
 }
 
 function jmxLogin(e, u, p) {

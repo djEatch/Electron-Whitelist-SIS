@@ -141,6 +141,29 @@ ipcMain.on('selectedFromMap', function(e,data){
   win.webContents.send("refreshFromMap",data);
 })
 
+ipcMain.on('showResultsWindow', function(e,data){
+  resultsWin = new BrowserWindow({
+    show: false,
+    width: 800,
+    height: 600
+  });
+  resultsWin.loadURL(
+    url.format({
+      pathname: path.join(__dirname, "results.html"),
+      protocol: "file:",
+      slashes: true
+    })
+  );
+  resultsWin.on("closed", () => {
+    resultsWin = null;
+  });
+
+  resultsWin.once("ready-to-show", () => {
+    resultsWin.webContents.send("showResults", data);
+    resultsWin.show();
+  });
+})
+
 // class MasterLB {
 //   constructor(envname, hostname, endpoint, username, password) {
 //     this.envname = envname;
