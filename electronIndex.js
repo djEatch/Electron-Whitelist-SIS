@@ -5,6 +5,7 @@ var $ = require("jquery");
 const sql = require("mssql");
 
 const sqlConfig = JSON.parse(electron.remote.getGlobal("sqlConfigString"));
+const remote = require('electron').remote
 
 const {clipboard} = require('electron');
 //clipboard.writeText('Example String');
@@ -59,11 +60,32 @@ let closedListData;
 
 let masterData;
 
-getMasterData();
+showSQLLoginModal();
+//getMasterData();
 
 // function fudgeFunction() {
 //   console.log("Clicked");
 // }
+
+function showSQLLoginModal(_envType) {
+  let sqlCredModal = document.querySelector("#modalSQLpara");
+  sqlCredModal.innerHTML =
+    "Enter SQL password details for the " + sqlConfig.user + " account.";
+  //let sqlCredModalSubmitBtn = document.querySelector("#btnSetSQLcredentials");
+  //sqlCredModalSubmitBtn.setAttribute("data-lbUserEnvType", _envType);
+  $("#loginModalDiv").modal("show");
+}
+
+function sqlLogin(p) {
+  sqlConfig.password = p.value;
+  $("#loginModalDiv").modal("hide");
+  getMasterData();
+}
+
+function closeApp(){
+  let win = remote.getCurrentWindow()
+  win.close()
+}
 
 async function getMasterData() {
   let pool = await sql.connect(sqlConfig);
@@ -424,44 +446,6 @@ function exportResults(exportMode){
   console.log(outputString);
 }
 
-function jmxLogin(e, u, p) {
-  let envName = e.getAttribute("data-jmxUserEnvName");
-  let _action = e.getAttribute("data-jmxUserAction");
-  let _server = JSON.parse(e.getAttribute("data-jmxUserServer"));
-  jmxUsers.push(new JMXUser(envName, u.value, p.value));
-  $("#jmxLoginModalDiv").modal("hide");
-  maintMode(_action, _server);
-}
-
-function reAuthenticateJMX(url, response, _envName, _action, _server) {
-  //_envName = document.querySelector("#EnvDropDown").value;
-  console.log("NEED NEW CREDS, for " + _envName, url, response);
-  jmxUsers = jmxUsers.filter(function(jmxu) {
-    return jmxu != currentJMXuser;
-  });
-
-  showJMXLoginModal(_envName, _action, _server);
-}
-
-function showJMXLoginModal(_envName, _action, _server) {
-  try {
-    $("#myModal").modal("hide");
-  } catch (error) {
-    console.log(error, "no modal to close");
-  }
-  let jmxCredModal = document.querySelector("#modalJMXpara");
-  jmxCredModal.innerHTML =
-    "Enter JMX login details for the envrionment: " + _envName;
-  let jmxCredModalSubmitBtn = document.querySelector("#btnSetJMXcredentials");
-  jmxCredModalSubmitBtn.setAttribute("data-jmxUserEnvName", _envName);
-  jmxCredModalSubmitBtn.setAttribute("data-jmxUserAction", _action);
-  jmxCredModalSubmitBtn.setAttribute(
-    "data-jmxUserServer",
-    JSON.stringify(_server)
-  );
-  $("#jmxLoginModalDiv").modal("show");
-}
-
 function buildSQLQueryString() {
   //ipcRenderer.send("getFilterLists");
   let queryString = "";
@@ -705,75 +689,6 @@ function postedMaint(response, action, err, _server, timeout) {
   // if (timeout > 0) {
   //   setTimeout(getServerListFromSubLBList, 1000 * timeout, currentSubEnv);
   // }
-}
-
-function maintMode(action, server) {
-  currentJMXuser = null;
-  for (jmxUser of jmxUsers) {
-    if (jmxUser.environmentName == server.name.split("-")[0]) {
-      currentJMXuser = jmxUser;
-      break;
-    }
-  }
-
-  if (!currentJMXuser) {
-    showJMXLoginModal(server.name.split("-")[0], action, server);
-    return;
-  }
-
-  //, timeoutSeconds) {
-  //gbrpmsuisf01.corp.internal
-  let timeoutSeconds = 0;
-  switch (action.toUpperCase()) {
-    case "SET": {
-      // if (!timeoutSeconds) {
-      //   timeoutSeconds = 0;
-      // }
-      postRequest(
-        postedMaint,
-        "https://" +
-          server.hostname +
-          ":8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/setMaintenanceMode(int,boolean)",
-        "param=" + timeoutSeconds + "&param=false&executed=true",
-        "Basic " +
-          btoa(currentJMXuser.userName + ":" + currentJMXuser.passWord),
-        action,
-        server //,
-        // timeoutSeconds
-      );
-      // https://gbrpmsuisf01.corp.internal:8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/setMaintenanceMode%28int%2Cboolean%29
-      //console.log(action, server);
-      break;
-    }
-    case "UNSET": {
-      postRequest(
-        postedMaint,
-        "https://" +
-          server.hostname +
-          ":8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/unsetMaintenanceMode()",
-        "executed=true",
-        "Basic " +
-          btoa(currentJMXuser.userName + ":" + currentJMXuser.passWord),
-        action,
-        server
-      );
-      // https://gbrpmsuisf01.corp.internal:8443/application-status-monitor/jmx/servers/0/domains/com.ab.oneleo.status.monitor.mbean/mbeans/type=ApplicationStatusMonitor/operations/unsetMaintenanceMode%28%29
-      console.log(action, server);
-      break;
-    }
-    default: {
-      console.log(server);
-    }
-  }
-  //console.log("end of function");
-}
-
-class JMXUser {
-  constructor(envName, uName, pWord) {
-    this.environmentName = envName;
-    this.userName = uName;
-    this.passWord = pWord;
-  }
 }
 
 ipcRenderer.on("initPageContent", function() {
