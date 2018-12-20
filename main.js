@@ -12,6 +12,7 @@ let resilientFile = __dirname + "/data/ResilientList.txt";
 let DSPFile = __dirname + "/data/DSPList.txt";
 let CHSFile = __dirname + "/data/CHSList.txt";
 let configFile = __dirname + "/connection.json";
+let filterArray = []
 
 global.sqlConfigString = fs.readFileSync(configFile).toString();
 
@@ -75,9 +76,39 @@ app.on("ready", function() {
 //   });
 // })
 
+function endsTXT(filename){
+  return (filename.slice(-4).toLowerCase() == ".txt");
+}
+
+class FilterFile {
+  constructor(fileName, location){
+    this.fileName = fileName;
+    this.filePath = location + fileName;
+    this.filterName = fileName.slice(0,-4).replace("List","");
+    this.storeNums = [];
+  }
+  
+}
+
+
 ipcMain.on('getFilterLists',getFilterLists);
 
 function getFilterLists() {
+
+  filterArray = [];
+  let filterLocation = __dirname +'\\data\\'
+  let filterFiles = fs.readdirSync(filterLocation).filter(endsTXT);
+  
+  for (let file of filterFiles){
+    filterArray.push(new FilterFile(file,filterLocation));
+  }
+  console.log(filterArray);
+
+  // filterFiles = filterFiles.filter(endsTXT);
+  // console.log(filterFiles);
+
+
+
 
   let columbusList = [];
   let resilientList = [];
