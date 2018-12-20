@@ -9,8 +9,8 @@ let win;
 
 let columbusFile = __dirname + "/data/ColumbusList.txt";
 let resilientFile = __dirname + "/data/ResilientList.txt";
-let DSPFile = __dirname + "/data/ColumbusList.txt";
-let CHSFile = __dirname + "/data/ResilientList.txt";
+let DSPFile = __dirname + "/data/DSPList.txt";
+let CHSFile = __dirname + "/data/CHSList.txt";
 let configFile = __dirname + "/connection.json";
 
 global.sqlConfigString = fs.readFileSync(configFile).toString();
