@@ -45,36 +45,14 @@ app.on("ready", function() {
 
   win.once("ready-to-show", () => {
     //getMasterLBList();
-    win.webContents.send("initPageContent");
+    getFilters();
+    win.webContents.send("initPageContent",filterArray);
     win.show();
   });
 
   const winMenu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(winMenu);
 });
-
-// ipcMain.on('showServerWindow', function(e,data){
-//   serverWin = new BrowserWindow({
-//     show: false,
-//     width: 800,
-//     height: 600
-//   });
-//   serverWin.loadURL(
-//     url.format({
-//       pathname: path.join(__dirname, "serverWindow.html"),
-//       protocol: "file:",
-//       slashes: true
-//     })
-//   );
-//   serverWin.on("closed", () => {
-//     serverWin = null;
-//   });
-
-//   serverWin.once("ready-to-show", () => {
-//     serverWin.webContents.send("showServerList", data);
-//     serverWin.show();
-//   });
-// })
 
 function endsTXT(filename){
   return (filename.slice(-4).toLowerCase() == ".txt");
@@ -91,9 +69,9 @@ class FilterFile {
 }
 
 
-ipcMain.on('getFilterLists',getFilterLists);
+//ipcMain.on('getFilters',getFilters);
 
-function getFilterLists() {
+function getFilters() {
 
   filterArray = [];
   let filterLocation = __dirname +'\\data\\'
@@ -102,74 +80,26 @@ function getFilterLists() {
   for (let file of filterFiles){
     filterArray.push(new FilterFile(file,filterLocation));
   }
+
+  for (let filter of filterArray){
+    let data,allTextLines, headers;
+    data = fs.readFileSync(filter.filePath).toString();
+
+    allTextLines = data.split(/\r\n|\n/);
+    headers = allTextLines[0].split(",");
+
+    for (let i = 1; i < allTextLines.length; i++) {
+      // split content based on comma
+      let data = allTextLines[i].split(",");
+      if (data.length == headers.length) {
+        filter.storeNums.push(data[0].replace(/['"]+/g, ""));
+      }
+    }
+
+  }
+
   console.log(filterArray);
-
-  // filterFiles = filterFiles.filter(endsTXT);
-  // console.log(filterFiles);
-
-
-
-
-  let columbusList = [];
-  let resilientList = [];
-  let CHSList = [];
-  let DSPList = [];
-
-  let data,allTextLines, headers;
-  
-  data = fs.readFileSync(columbusFile).toString();
-
-  allTextLines = data.split(/\r\n|\n/);
-  headers = allTextLines[0].split(",");
-
-  for (let i = 1; i < allTextLines.length; i++) {
-    // split content based on comma
-    let data = allTextLines[i].split(",");
-    if (data.length == headers.length) {
-      columbusList.push(data[0].replace(/['"]+/g, ""));
-    }
-  }
-
-  data = fs.readFileSync(resilientFile).toString();
-
-  allTextLines = data.split(/\r\n|\n/);
-  headers = allTextLines[0].split(",");
-
-  for (let i = 1; i < allTextLines.length; i++) {
-    // split content based on comma
-    let data = allTextLines[i].split(",");
-    if (data.length == headers.length) {
-      resilientList.push(data[0].replace(/['"]+/g, ""));
-    }
-  }
-
-  data = fs.readFileSync(DSPFile).toString();
-
-  allTextLines = data.split(/\r\n|\n/);
-  headers = allTextLines[0].split(",");
-
-  for (let i = 1; i < allTextLines.length; i++) {
-    // split content based on comma
-    let data = allTextLines[i].split(",");
-    if (data.length == headers.length) {
-      DSPList.push(data[0].replace(/['"]+/g, ""));
-    }
-  }
-
-  data = fs.readFileSync(CHSFile).toString();
-
-  allTextLines = data.split(/\r\n|\n/);
-  headers = allTextLines[0].split(",");
-
-  for (let i = 1; i < allTextLines.length; i++) {
-    // split content based on comma
-    let data = allTextLines[i].split(",");
-    if (data.length == headers.length) {
-      CHSList.push(data[0].replace(/['"]+/g, ""));
-    }
-  }
-
-  win.webContents.send("setFilterLists", columbusList, resilientList, DSPList, CHSList);
+  //win.webContents.send("setFilters", filterArray);
 }
 
 ipcMain.on('spawnMap', function (e,data,mode,filters){

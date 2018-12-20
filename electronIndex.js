@@ -10,6 +10,7 @@ const remote = require('electron').remote
 const {clipboard} = require('electron');
 //clipboard.writeText('Example String');
 
+let filterArray;
 
 let jmxUsers = [];
 let currentJMXuser;
@@ -38,10 +39,10 @@ const columnsToShow = [
   "SAG",
   //"Latitude",
   //"Longitude",
-  columbusCol,
-  resilientCol,	
-  DSPCol,
-  CHSCol,
+  // columbusCol,
+  // resilientCol,	
+  // DSPCol,
+  // CHSCol,
   selectCol
 ];
 
@@ -52,10 +53,19 @@ const modalDiv = document.querySelector("#modalDiv");
 // const fudgeButton = document.querySelector("#fudgeButton");
 // fudgeButton.addEventListener("click", fudgeFunction);
 
-const searchButton = document.querySelector("#searchButton");
-searchButton.addEventListener("click", _ => {
-  ipcRenderer.send("getFilterLists");
-});
+// const searchButton = document.querySelector("#searchButton");
+// searchButton.addEventListener("click", _ => {
+//   ipcRenderer.send("getFilterLists");
+// });
+
+function search(){
+  let sqlQuery = buildSQLQueryString();
+  getSQLResults(sqlQuery).then(results => {
+    sqlResults = results;
+    addExternalData(sqlResults);
+    drawTableFromSQL();
+  });
+}
 
 let divisionListData;
 let regionListData;
@@ -274,34 +284,14 @@ async function getSQLResults(sqlQuery) {
 function addExternalData(resultSet) {
   console.log(resultSet);
   for (result of resultSet.recordset) {
-    result[columbusCol] = "FALSE";
-    result[resilientCol] = "FALSE";
-    result[DSPCol] = "FALSE";
-    result[CHSCol] = "FALSE";
-
     let storeNum = toFourDigits(result["Property_id"]);
-    for (site of columbusList) {
-      if (site == storeNum) {
-        result[columbusCol] = "TRUE";
-        break;
-      }
-    }
-    for (site of resilientList) {
-      if (site == storeNum) {
-        result[resilientCol] = "TRUE";
-        break;
-      }
-    }
-    for (site of DSPList) {
-      if (site == storeNum) {
-        result[DSPCol] = "TRUE";
-        break;
-      }
-    }
-    for (site of CHSList) {
-      if (site == storeNum) {
-        result[CHSCol] = "TRUE";
-        break;
+    for(let filter of filterArray){
+      result[filter.filterName] = "FALSE";
+      for (site of filter.storeNums) {
+        if (site == storeNum) {
+          result[filter.filterName] = "TRUE";
+          break;
+        }
       }
     }
   }
@@ -334,24 +324,35 @@ function drawTableFromSQL() {
     let cell = row.insertCell();
     if(element != selectCol){
       cell.innerHTML = "<b>" + element + "</b>";
-    } else {
-      cell.innerHTML =
-      '<b>Select</b><input align="left" type="checkbox" name="chkSelect" onclick="toggleSelect(this.checked)">';
-    }
+    } 
   }
 
+  for(let filter of filterArray){
+    let cell = row.insertCell();
+    cell.innerHTML = "<b>" + filter.filterName + "</b>";
+  }
 
-  let ChkColOnly = document.all.item("ChkColOnly");
-  let ChkResOnly = document.all.item("ChkResOnly");
-  let ChkDSPOnly = document.all.item("ChkDSPOnly");
-  let ChkCHSOnly = document.all.item("ChkCHSOnly");
+  let cell = row.insertCell();
+  cell.innerHTML = '<b>Select</b><input align="left" type="checkbox" name="chkSelect" onclick="toggleSelect(this.checked)">';
+
+  // let ChkColOnly = document.all.item("ChkColOnly");
+  // let ChkResOnly = document.all.item("ChkResOnly");
+  // let ChkDSPOnly = document.all.item("ChkDSPOnly");
+  // let ChkCHSOnly = document.all.item("ChkCHSOnly");
 
   for (result of sqlResults.recordset) {
-    if (
-      (result[columbusCol] == "TRUE" || !ChkColOnly.checked) &&
-      (result[resilientCol] == "TRUE" || !ChkResOnly.checked) &&
-      (result[DSPCol] == "TRUE" || !ChkDSPOnly.checked) &&
-      (result[CHSCol] == "TRUE" || !ChkCHSOnly.checked)
+    let badCount = 0;
+    for(let filter of filterArray){
+      if (document.all.item("CHK"+filter.filterName).checked && result[filter.filterName] != "TRUE"){
+        badCount ++;
+      }
+      
+    }
+    if ( badCount == 0
+      // (result[columbusCol] == "TRUE" || !ChkColOnly.checked) &&
+      // (result[resilientCol] == "TRUE" || !ChkResOnly.checked) &&
+      // (result[DSPCol] == "TRUE" || !ChkDSPOnly.checked) &&
+      // (result[CHSCol] == "TRUE" || !ChkCHSOnly.checked)
     ) {
       let row = table.insertRow();
       let storenum;
@@ -368,6 +369,12 @@ function drawTableFromSQL() {
             });
           }
         }
+      }
+
+      for(let filter of filterArray){
+        var value = result[filter.filterName];
+          let cell = row.insertCell();
+          cell.innerHTML = value;
       }
 
       let cell = row.insertCell();
@@ -392,6 +399,21 @@ function drawTableFromSQL() {
   let tableDiv = document.getElementById("TableDiv");
   tableDiv.innerHTML = "";
   tableDiv.appendChild(table);
+}
+
+function buildFilterSection(){
+  let filterDiv = document.getElementById("filterDiv");
+  console.log (filterArray);
+  for(let filter of filterArray){
+    let div = document.createElement('div');
+    let chkBox = document.createElement('input')
+    chkBox.align = "left"
+    chkBox.type = "checkbox"
+    chkBox.name = "CHK"+filter.filterName;
+    div.textContent = filter.filterName + " Only?"
+    div.insertBefore(chkBox, div.childNodes[0]);
+    filterDiv.appendChild(div);
+  }
 }
 
 function selectStore(num, ticked) {
@@ -560,34 +582,6 @@ function toFourDigits(_storeNum) {
   return storeNum;
 }
 
-function detailsToArray(inTable) {
-  var json = [];
-  var headings = [];
-
-  let headerSet = false;
-
-  let subTables = inTable.rows[0].querySelectorAll("table");
-  console.log(subTables);
-
-  for (let inRow = 0; inRow < inTable.rows.length; inRow++) {
-    console.log(inTable.rows[0]);
-    // if (inTable.rows[inRow].cells.length > 1) {
-    //   if (!headerSet) {
-    //     for (let inCol = 0; inCol < inTable.rows[inRow].cells.length; inCol++) {
-    //       headings.push(inTable.rows[inRow].cells[inCol].textContent);
-    //     }
-    //     headerSet = true;
-    //   } else {
-    //     let obj = {};
-    //     for (let inCol = 0; inCol < inTable.rows[inRow].cells.length; inCol++) {
-    //       obj[headings[inCol]] = inTable.rows[inRow].cells[inCol].textContent;
-    //     }
-    //     json.push(obj);
-    //   }
-    // }
-  }
-  return json;
-}
 
 function resultsToArray(inTable) {
   var json = [];
@@ -733,7 +727,8 @@ function postedMaint(response, action, err, _server, timeout) {
   // }
 }
 
-ipcRenderer.on("initPageContent", function() {
+ipcRenderer.on("initPageContent", function(e,_filterArray) {
+  filterArray = _filterArray;
   initPageContent();
 });
 
@@ -752,6 +747,8 @@ function initPageContent() {
   jsEnableControl(8, false, "FormatList");
   jsEnableControl(9, false, "ClosedList");
   jsEnableControl(10, false, "SAGList");
+
+  buildFilterSection();
 }
 
 function jsEnableControl(itemNumber, visible, controlName) {

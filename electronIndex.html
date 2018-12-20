@@ -71,36 +71,18 @@
                                     </div>
                                 </div>
                                 <div >
-                                        <button id="searchButton" class="btn btn-primary btn-block">SEARCH</button>
+                                        <button id="searchButton" class="btn btn-primary btn-block" onclick="search()">SEARCH</button>
                                 </div>
                             </div>
                             <div class="row">
-                                <div>
-                                    <div>
-                                        <input align="left" type="checkbox" name="ChkColOnly"> Columbus Only?
-                                    </div>
-                                    <div>
-                                        <input align="left" type="checkbox" name="ChkResOnly"> Resilient Only?
-                                    </div>
-                                </div>
-                                <div width="10px"></div>
-                                <div>
-                                    <div>
-                                        <input align="left" type="checkbox" name="ChkDSPOnly"> DSP Only?
-                                    </div>
-                                    <div>
-                                        <input align="left" type="checkbox" name="ChkCHSOnly"> CHS Only?
-                                    </div>
-                                </div>
-                                <div width="10px"></div>
-                                <div>
-                                    <div>
-                                        <button id="filterButton" class="btn btn-secondary btn-block" onclick="toggleSelect(false);drawTableFromSQL()">filter</button>
-                                    </div>
-                                </div>
-                                <div width="10px">
+                                <div id=filterDiv>
 
                                 </div>
+                                <div>
+                                    <button id="filterButton" class="btn btn-secondary btn-block" onclick="toggleSelect(false);drawTableFromSQL()">filter</button>
+                                </div>
+                            </div> 
+                            <div class="row">
                                 <div>
                                     
                                         <button id="mapAllButton" class="btn btn-primary" onclick="mapResults('ALL')">Map All</button>
