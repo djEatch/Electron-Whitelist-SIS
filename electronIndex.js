@@ -403,6 +403,7 @@ function drawTableFromSQL() {
 
 function buildFilterSection(){
   let filterDiv = document.getElementById("filterDiv");
+  let filterButtonDiv= document.getElementById("filterButtonDiv");
   console.log (filterArray);
   for(let filter of filterArray){
     let div = document.createElement('div');
@@ -412,7 +413,7 @@ function buildFilterSection(){
     chkBox.name = "CHK"+filter.filterName;
     div.textContent = filter.filterName + " Only?"
     div.insertBefore(chkBox, div.childNodes[0]);
-    filterDiv.appendChild(div);
+    filterDiv.insertBefore(div,filterButtonDiv);
   }
 }
 
