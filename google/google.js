@@ -83,7 +83,10 @@ function drawGoogleMarkers() {
         (currentMode == "SELECTED" && record.user_selected) ||
         (currentMode == "FILTERED" &&
           ((record.Columbus == "TRUE" || !currentFilters.ChkColOnly) &&
-            (record.Resilient == "TRUE" || !currentFilters.ChkResOnly)))
+            (record.Resilient == "TRUE" || !currentFilters.ChkResOnly) &&
+            (record.DSP == "TRUE" || !currentFilters.ChkDSPOnly) &&
+            (record.CHS == "TRUE" || !currentFilters.ChkCHSOnly))
+        )
       ) {
         let infowindow = new google.maps.InfoWindow({
           content:
@@ -94,6 +97,10 @@ function drawGoogleMarkers() {
             record.Resilient +
             "<br>Columbus: " +
             record.Columbus +
+            "<br>DSP: " +
+            record.DSP +
+            "<br>CHS: " +
+            record.CHS +
             '<br>Selected: ' + record.user_selected + ' <button value="' +
             record.Property_id +
             '" onclick="toggleSelect(this);closeInfowindow(this);drawGoogleMarkers()">Toggle</button>',
