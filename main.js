@@ -9,6 +9,8 @@ let win;
 
 let columbusFile = __dirname + "/data/ColumbusList.txt";
 let resilientFile = __dirname + "/data/ResilientList.txt";
+let DSPFile = __dirname + "/data/ColumbusList.txt";
+let CHSFile = __dirname + "/data/ResilientList.txt";
 let configFile = __dirname + "/connection.json";
 
 global.sqlConfigString = fs.readFileSync(configFile).toString();
@@ -79,6 +81,8 @@ function getFilterLists() {
 
   let columbusList = [];
   let resilientList = [];
+  let CHSList = [];
+  let DSPList = [];
 
   let data,allTextLines, headers;
   
@@ -108,7 +112,33 @@ function getFilterLists() {
     }
   }
 
-  win.webContents.send("setFilterLists", columbusList, resilientList);
+  data = fs.readFileSync(DSPFile).toString();
+
+  allTextLines = data.split(/\r\n|\n/);
+  headers = allTextLines[0].split(",");
+
+  for (let i = 1; i < allTextLines.length; i++) {
+    // split content based on comma
+    let data = allTextLines[i].split(",");
+    if (data.length == headers.length) {
+      DSPList.push(data[0].replace(/['"]+/g, ""));
+    }
+  }
+
+  data = fs.readFileSync(CHSFile).toString();
+
+  allTextLines = data.split(/\r\n|\n/);
+  headers = allTextLines[0].split(",");
+
+  for (let i = 1; i < allTextLines.length; i++) {
+    // split content based on comma
+    let data = allTextLines[i].split(",");
+    if (data.length == headers.length) {
+      CHSList.push(data[0].replace(/['"]+/g, ""));
+    }
+  }
+
+  win.webContents.send("setFilterLists", columbusList, resilientList, DSPList, CHSList);
 }
 
 ipcMain.on('spawnMap', function (e,data,mode,filters){

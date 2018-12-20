@@ -16,9 +16,13 @@ let currentJMXuser;
 let sisResults;
 let columbusList = [];
 let resilientList = [];
+let DSPList = [];
+let CHSList = [];
 
 let columbusCol = "Columbus";
 let resilientCol = "Resilient";
+let DSPCol = "DSP";
+let CHSCol = "CHS";
 let selectCol = "user_selected";
 let sqlResults;
 const columnsToShow = [
@@ -36,6 +40,8 @@ const columnsToShow = [
   //"Longitude",
   columbusCol,
   resilientCol,	
+  DSPCol,
+  CHSCol,
   selectCol
 ];
 
@@ -229,9 +235,11 @@ function onlyUnique(value, index, self) {
   return self.indexOf(value) === index;
 }
 
-ipcRenderer.on("setFilterLists", function(e, _columbusList, _resilientList) {
+ipcRenderer.on("setFilterLists", function(e, _columbusList, _resilientList, _DSPList, _CHSList) {
   columbusList = _columbusList;
   resilientList = _resilientList;
+  DSPList = _DSPList;
+  CHSList = _CHSList;
   let sqlQuery = buildSQLQueryString();
   getSQLResults(sqlQuery).then(results => {
     sqlResults = results;
@@ -268,6 +276,8 @@ function addExternalData(resultSet) {
   for (result of resultSet.recordset) {
     result[columbusCol] = "FALSE";
     result[resilientCol] = "FALSE";
+    result[DSPCol] = "FALSE";
+    result[CHSCol] = "FALSE";
 
     let storeNum = toFourDigits(result["Property_id"]);
     for (site of columbusList) {
@@ -279,6 +289,18 @@ function addExternalData(resultSet) {
     for (site of resilientList) {
       if (site == storeNum) {
         result[resilientCol] = "TRUE";
+        break;
+      }
+    }
+    for (site of DSPList) {
+      if (site == storeNum) {
+        result[DSPCol] = "TRUE";
+        break;
+      }
+    }
+    for (site of CHSList) {
+      if (site == storeNum) {
+        result[CHSCol] = "TRUE";
         break;
       }
     }
@@ -321,11 +343,15 @@ function drawTableFromSQL() {
 
   let ChkColOnly = document.all.item("ChkColOnly");
   let ChkResOnly = document.all.item("ChkResOnly");
+  let ChkDSPOnly = document.all.item("ChkDSPOnly");
+  let ChkCHSOnly = document.all.item("ChkCHSOnly");
 
   for (result of sqlResults.recordset) {
     if (
       (result[columbusCol] == "TRUE" || !ChkColOnly.checked) &&
-      (result[resilientCol] == "TRUE" || !ChkResOnly.checked)
+      (result[resilientCol] == "TRUE" || !ChkResOnly.checked) &&
+      (result[DSPCol] == "TRUE" || !ChkDSPOnly.checked) &&
+      (result[CHSCol] == "TRUE" || !ChkCHSOnly.checked)
     ) {
       let row = table.insertRow();
       let storenum;
@@ -392,7 +418,9 @@ function mapResults(mapMode) {
   //let records = sqlResults.recordset;
   let filters = {
     ChkColOnly: document.all.item("ChkColOnly").checked,
-    ChkResOnly: document.all.item("ChkResOnly").checked
+    ChkResOnly: document.all.item("ChkResOnly").checked,
+    ChkDSPOnly: document.all.item("ChkDSPOnly").checked,
+    ChkCHSOnly: document.all.item("ChkCHSOnly").checked
   };
   //ipcRenderer.send('spawnMap', records,mapMode,filters);
   ipcRenderer.send("spawnMap", sqlResults, mapMode, filters);
@@ -590,6 +618,20 @@ function resultsToArray(inTable) {
             for (site of resilientList) {
               if (site == storeNum) {
                 obj[resilientCol] = "TRUE";
+                break;
+              }
+            }
+            obj[DSPCol] = "FALSE";
+            for (site of DSPList) {
+              if (site == storeNum) {
+                obj[DSPCol] = "TRUE";
+                break;
+              }
+            }
+            obj[CHSCol] = "FALSE";
+            for (site of CHSList) {
+              if (site == storeNum) {
+                obj[CHSCol] = "TRUE";
                 break;
               }
             }
