@@ -321,8 +321,8 @@ function drawTableFromSQL() {
   }
 
   for (element of columnsToShow) {
-    let cell = row.insertCell();
     if(element != selectCol){
+      let cell = row.insertCell();
       cell.innerHTML = "<b>" + element + "</b>";
     } 
   }
@@ -412,6 +412,7 @@ function buildFilterSection(){
     chkBox.type = "checkbox"
     chkBox.name = "CHK"+filter.filterName;
     div.textContent = filter.filterName + " Only?"
+    div.style="margin-right:5px"
     div.insertBefore(chkBox, div.childNodes[0]);
     filterDiv.insertBefore(div,filterButtonDiv);
   }

@@ -22,7 +22,7 @@
         <nav class="navbar fixed-top navbar-light bg-light">
                 <div id="optionsDiv" class="col-md-12">
                             <div class="row">
-                                <div>
+                                <div style="margin-right:5px">
                                     <div>
                                         <input type="checkbox" name="ChkDivision" value="5" onclick="jsEnableControl(5,this.checked,'DivisionList');">Division
                                     </div>
@@ -30,7 +30,7 @@
                                         <select name="DivisionList" disabled="true"></select>
                                     </div>   
                                 </div>
-                                <div>
+                                <div style="margin-right:5px">
                                     <div >
                                         <input type="checkbox" name="ChkRegion" value="6" onclick="jsEnableControl(6,this.checked,'RegionList');">Region
                                     </div>
@@ -38,7 +38,7 @@
                                         <select name="RegionList" disabled="true"></select>
                                     </div>
                                 </div> 
-                                <div>
+                                <div style="margin-right:5px">
                                     <div>
                                         <input align="left" type="checkbox" name="ChkArea" value="7" onclick="jsEnableControl(7,this.checked,'CAList');">Area
                                     </div>
@@ -46,7 +46,7 @@
                                         <select name="CAList"  size="1" disabled="true"></select>	
                                     </div>
                                 </div>
-                                <div>
+                                <div style="margin-right:5px">
                                     <div >
                                         <input align="left" type="checkbox" name="ChkFormat" value="8" onclick="jsEnableControl(8,this.checked,'FormatList');">Format
                                     </div>
@@ -54,7 +54,7 @@
                                         <select name="FormatList"  size="1" disabled="true"></select>
                                     </div>
                                 </div>
-                                <div>
+                                <div style="margin-right:5px">
                                     <div>
                                         <input align="left" type="checkbox" name="ChkClosed" value="9" onclick="jsEnableControl(9,this.checked,'ClosedList');">Exclude
                                     </div>
@@ -62,7 +62,7 @@
                                         <select multiple name="ClosedList"  size="3" disabled="true"></select>
                                     </div>
                                 </div>
-                                <div>
+                                <div style="margin-right:5px">
                                     <div>
                                         <input align="left" type="checkbox" name="ChkSAG" value="10" onclick="jsEnableControl(10,this.checked,'SAGList');">SAG
                                     </div>
@@ -74,17 +74,27 @@
                                         <button id="searchButton" class="btn btn-primary btn-block" onclick="search()">SEARCH</button>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div id=filterDiv class="row">
-
-                                        <div id="filterButtonDiv">
-                                                <button id="filterButton" class="btn btn-secondary btn-block" onclick="toggleSelect(false);drawTableFromSQL()">filter</button>
-                                            </div>
-                                            
+                            <div id="filterDiv" class="row">
+                                <div id="filterButtonDiv" style="margin-right:5px">
+                                    <button id="filterButton" class="btn btn-secondary btn-block" onclick="toggleSelect(false);drawTableFromSQL()">filter</button>
                                 </div>
+                                <div>
+                                    
+                                    <button id="mapAllButton" class="btn btn-primary" onclick="mapResults('ALL')">Map All</button>
                                 
+                                    <button id="mapFilteredButton" class="btn btn-primary" onclick="mapResults('FILTERED')">Map Filtered</button>
+                                
+                                    <button id="mapSelectedButton" class="btn btn-primary" onclick="mapResults('SELECTED')">Map Selection</button>
+
+                                    <button id="btnToClipboard" class="btn btn-primary" onclick="exportResults('CLIP')">Selected to Clipboard</button>
+
+                                    <button id="btnToScreen" class="btn btn-primary" onclick="exportResults('SCREEN')">Selected to Screen</button>
+
+                                    <button id="btnToFile" class="btn btn-primary" onclick="exportResults('FILE')">Selected to File</button>
+                                
+                                </div>
                             </div> 
-                            <div class="row">
+                            <!-- <div class="row">
                                 <div>
                                     
                                         <button id="mapAllButton" class="btn btn-primary" onclick="mapResults('ALL')">Map All</button>
@@ -100,8 +110,7 @@
                                         <button id="btnToFile" class="btn btn-primary" onclick="exportResults('FILE')">Selected to File</button>
                                     
                                 </div>
-                            </div>
-                        </table>
+                            </div> -->
                     </div>
 
                 <!-- <div class="row">
@@ -145,7 +154,7 @@
         </div>
       </div>
 
-    <div class="container-fluid" style="margin-top: 150px; margin-bottom:10px">
+    <div class="container-fluid" style="margin-top: 200px; margin-bottom:10px">
         <!-- <div class="row">
             <div class="col-md-12">
                 <button id="fudgeButton" class="btn btn-primary btn-block">FUDGE BUTTON</button>
