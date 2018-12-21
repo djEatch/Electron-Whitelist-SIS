@@ -64,6 +64,7 @@ class FilterFile {
     this.filePath = location + fileName;
     this.filterName = fileName.slice(0,-4).replace("List","");
     this.storeNums = [];
+    this.checked = false;
   }
   
 }

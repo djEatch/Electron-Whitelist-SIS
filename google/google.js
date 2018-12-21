@@ -76,17 +76,21 @@ function drawGoogleMarkers() {
   }
   markers = [];
   infowindows = [];
+  let badCount;
   for (record of sqlResults.recordset) {
     if (record.Latitude && record.Longitude) {
+      if(currentMode == "FILTERED"){
+        badCount = 0;
+        for(let filter of currentFilters){
+          if (filter.checked && record[filter.filterName] != "TRUE"){
+            badCount ++;
+          }
+        }
+      }
       if (
         currentMode == "ALL" ||
         (currentMode == "SELECTED" && record.user_selected) ||
-        (currentMode == "FILTERED" &&
-          ((record.Columbus == "TRUE" || !currentFilters.ChkColOnly) &&
-            (record.Resilient == "TRUE" || !currentFilters.ChkResOnly) &&
-            (record.DSP == "TRUE" || !currentFilters.ChkDSPOnly) &&
-            (record.CHS == "TRUE" || !currentFilters.ChkCHSOnly))
-        )
+        (currentMode == "FILTERED" && badCount == 0)
       ) {
         let infowindow = new google.maps.InfoWindow({
           content:

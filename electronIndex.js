@@ -27,23 +27,23 @@ let CHSCol = "CHS";
 let selectCol = "user_selected";
 let sqlResults;
 const columnsToShow = [
-  "Property_id",
-  "property_name",
-  "division_id",
-  "region_id",	
-  "customer_area_id",
-  "format",
-  "trading_format",
-  "store_origin",
-  "property_type",
-  "SAG",
+  {dbText:"Property_id",columnTitle:"S.No"},
+  {dbText:"property_name",columnTitle:"Name"},
+  {dbText:"division_id",columnTitle:"Div"},
+  {dbText:"region_id",columnTitle:"Reg"},	
+  {dbText:"customer_area_id",columnTitle:"Area"},
+  {dbText:"format",columnTitle:"Format"},
+  {dbText:"trading_format",columnTitle:"T.Format"},
+  {dbText:"store_origin",columnTitle:"Origin"},
+  {dbText:"property_type",columnTitle:"Type"},
+  {dbText:"SAG",columnTitle:"SAG"},
   //"Latitude",
   //"Longitude",
   // columbusCol,
   // resilientCol,	
   // DSPCol,
   // CHSCol,
-  selectCol
+  {dbText:selectCol,columnTitle:"Select"}
 ];
 
 let sortOptions = { currentField: null, currentDir: -1 };
@@ -321,9 +321,9 @@ function drawTableFromSQL() {
   }
 
   for (element of columnsToShow) {
-    if(element != selectCol){
+    if(element.dbText != selectCol){
       let cell = row.insertCell();
-      cell.innerHTML = "<b>" + element + "</b>";
+      cell.innerHTML = "<b>" + element.columnTitle + "</b>";
     } 
   }
 
@@ -343,7 +343,7 @@ function drawTableFromSQL() {
   for (result of sqlResults.recordset) {
     let badCount = 0;
     for(let filter of filterArray){
-      if (document.all.item("CHK"+filter.filterName).checked && result[filter.filterName] != "TRUE"){
+      if (filter.checked && result[filter.filterName] != "TRUE"){
         badCount ++;
       }
       
@@ -358,11 +358,11 @@ function drawTableFromSQL() {
       let storenum;
       //console.log(result);
       for(col of columnsToShow) {
-        if (col != selectCol) {
-          var value = result[col];
+        if (col.dbText != selectCol) {
+          var value = result[col.dbText];
           let cell = row.insertCell();
           cell.innerHTML = value;
-          if (col == "Property_id") {
+          if (col.dbText == "Property_id") {
             storenum = value;
             cell.addEventListener("click", () => {
               console.log("clicked", value);
@@ -411,10 +411,22 @@ function buildFilterSection(){
     chkBox.align = "left"
     chkBox.type = "checkbox"
     chkBox.name = "CHK"+filter.filterName;
+    chkBox.checked = filter.checked;
+    chkBox.addEventListener("click", () => {
+      selectFilter(filter.filterName, chkBox.checked);
+    });
     div.textContent = filter.filterName + " Only?"
     div.style="margin-right:5px"
     div.insertBefore(chkBox, div.childNodes[0]);
     filterDiv.insertBefore(div,filterButtonDiv);
+  }
+}
+
+function selectFilter(fName,ticked){
+  for(let filter of filterArray){
+    if(filter.filterName == fName){
+      filter.checked = ticked;
+    }
   }
 }
 
@@ -440,14 +452,20 @@ function toggleSelect(ticked) {
 function mapResults(mapMode) {
   //let records = [];
   //let records = sqlResults.recordset;
-  let filters = {
-    ChkColOnly: document.all.item("ChkColOnly").checked,
-    ChkResOnly: document.all.item("ChkResOnly").checked,
-    ChkDSPOnly: document.all.item("ChkDSPOnly").checked,
-    ChkCHSOnly: document.all.item("ChkCHSOnly").checked
-  };
+  // let filters = {
+  //   ChkColOnly: document.all.item("ChkColOnly").checked,
+  //   ChkResOnly: document.all.item("ChkResOnly").checked,
+  //   ChkDSPOnly: document.all.item("ChkDSPOnly").checked,
+  //   ChkCHSOnly: document.all.item("ChkCHSOnly").checked
+  // };
+  // let filters = {};
+  // for(let filter of filterArray){
+  //   filters[filter.filterName]= document.all.item("CHK"+filter.filterName).checked
+  // }
+
   //ipcRenderer.send('spawnMap', records,mapMode,filters);
-  ipcRenderer.send("spawnMap", sqlResults, mapMode, filters);
+  //ipcRenderer.send("spawnMap", sqlResults, mapMode, filters);
+  ipcRenderer.send("spawnMap", sqlResults, mapMode, filterArray);
 }
 
 function exportResults(exportMode){
@@ -582,151 +600,6 @@ function toFourDigits(_storeNum) {
   let storeNum = "0000" + _storeNum;
   storeNum = storeNum.substr(-4);
   return storeNum;
-}
-
-
-function resultsToArray(inTable) {
-  var json = [];
-  var headings = [];
-
-  let headerSet = false;
-  for (let inRow = 0; inRow < inTable.rows.length; inRow++) {
-    if (inTable.rows[inRow].cells.length > 1) {
-      if (!headerSet) {
-        for (let inCol = 0; inCol < inTable.rows[inRow].cells.length; inCol++) {
-          headings.push(inTable.rows[inRow].cells[inCol].textContent);
-        }
-        headerSet = true;
-      } else {
-        let obj = {};
-        for (let inCol = 0; inCol < inTable.rows[inRow].cells.length; inCol++) {
-          obj[headings[inCol]] = inTable.rows[inRow].cells[inCol].textContent;
-          if (headings[inCol] == "Store Number") {
-            let storeNum = toFourDigits(obj[headings[inCol]]);
-            obj[columbusCol] = "FALSE";
-            for (site of columbusList) {
-              if (site == storeNum) {
-                obj[columbusCol] = "TRUE";
-                break;
-              }
-            }
-            obj[resilientCol] = "FALSE";
-            for (site of resilientList) {
-              if (site == storeNum) {
-                obj[resilientCol] = "TRUE";
-                break;
-              }
-            }
-            obj[DSPCol] = "FALSE";
-            for (site of DSPList) {
-              if (site == storeNum) {
-                obj[DSPCol] = "TRUE";
-                break;
-              }
-            }
-            obj[CHSCol] = "FALSE";
-            for (site of CHSList) {
-              if (site == storeNum) {
-                obj[CHSCol] = "TRUE";
-                break;
-              }
-            }
-          }
-        }
-        json.push(obj);
-      }
-    }
-  }
-  return json;
-}
-
-function getRequest(callback, url, id, username, password) {
-  var xhr = new XMLHttpRequest();
-  var startTime = new Date();
-  xhr.open("GET", url, true);
-  xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-  if (username) {
-    xhr.setRequestHeader(
-      "Authorization",
-      "Basic " + btoa(username + ":" + password)
-    );
-  }
-
-  xhr.send();
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState == 4 && xhr.status == 200) {
-      var endTime = new Date();
-      callback(xhr.responseText, id, endTime - startTime);
-    }
-    if (xhr.readyState == 4 && xhr.status == 401) {
-      if (
-        callback.name == "gotSubLBList" ||
-        callback.name == "gotSubServerList"
-      ) {
-        reAuthenticateLB(url, xhr.responseText);
-        return;
-      }
-    }
-    if (xhr.readyState == 4 && xhr.status != 200) {
-      var endTime = new Date();
-      callback(
-        "connection error, status:" + xhr.status,
-        id,
-        endTime - startTime
-      );
-    }
-  };
-}
-
-function postRequest(callback, url, args, auth, action, server, timeout) {
-  var xhr = new XMLHttpRequest();
-  //console.log(url, args);
-  xhr.open("POST", url, true);
-  xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-  if (auth) {
-    xhr.setRequestHeader("Authorization", auth);
-  }
-  xhr.send(args);
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState == 4 && xhr.status == 200) {
-      callback(xhr.responseText, action, null, server, timeout);
-    }
-    if (xhr.readyState == 4 && xhr.status == 401) {
-      if (callback.name == "postedMaint") {
-        reAuthenticateJMX(
-          url,
-          xhr.responseText,
-          server.name.split("-")[0],
-          action,
-          server
-        );
-        return;
-      }
-    }
-    if (xhr.readyState == 4 && xhr.status != 200) {
-      callback(xhr.responseText, action, xhr.status, server);
-    }
-  };
-}
-
-function postedMaint(response, action, err, _server, timeout) {
-  let replyStatus;
-  let replyTitle;
-  if (err) {
-    replyTitle = "Error: " + err;
-    replyStatus =
-      "Error " +
-      err +
-      " occured. Please try again later, if the error persists please contact support.";
-  } else {
-    let parser = new DOMParser();
-    let reply = parser.parseFromString(response, "text/html");
-  }
-  //console.log(replyStatus);
-  setTimeout(getServerListFromSubLBList, 10000, currentSubEnv);
-  // if (timeout > 0) {
-  //   setTimeout(getServerListFromSubLBList, 1000 * timeout, currentSubEnv);
-  // }
 }
 
 ipcRenderer.on("initPageContent", function(e,_filterArray) {
