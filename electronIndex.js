@@ -50,6 +50,8 @@ let sortOptions = { currentField: null, currentDir: -1 };
 
 const modalDiv = document.querySelector("#modalDiv");
 
+let recCount = 0;
+let selectCount = 0;
 // const fudgeButton = document.querySelector("#fudgeButton");
 // fudgeButton.addEventListener("click", fudgeFunction);
 
@@ -339,9 +341,11 @@ function drawTableFromSQL() {
   // let ChkResOnly = document.all.item("ChkResOnly");
   // let ChkDSPOnly = document.all.item("ChkDSPOnly");
   // let ChkCHSOnly = document.all.item("ChkCHSOnly");
-
+  recCount = 0;
+  selectCount = 0;
   for (result of sqlResults.recordset) {
     let badCount = 0;
+
     for(let filter of filterArray){
       if (filter.checked && result[filter.filterName] != "TRUE"){
         badCount ++;
@@ -355,6 +359,7 @@ function drawTableFromSQL() {
       // (result[CHSCol] == "TRUE" || !ChkCHSOnly.checked)
     ) {
       let row = table.insertRow();
+      recCount++;
       let storenum;
       //console.log(result);
       for(col of columnsToShow) {
@@ -391,6 +396,7 @@ function drawTableFromSQL() {
       } else {
         chk.checked = false;
       }
+      if(chk.checked){selectCount++;}
       cell.appendChild(chk);
       row.className = "table-info";
     }
@@ -399,6 +405,13 @@ function drawTableFromSQL() {
   let tableDiv = document.getElementById("TableDiv");
   tableDiv.innerHTML = "";
   tableDiv.appendChild(table);
+
+  updateFooter();
+}
+
+function updateFooter(){
+  let refreshDiv = document.getElementById("refreshDiv");
+  refreshDiv.textContent = recCount + " record(s), " + selectCount + " selected.";
 }
 
 function buildFilterSection(){
@@ -434,6 +447,9 @@ function selectStore(num, ticked) {
   for (result of sqlResults.recordset) {
     if (result["Property_id"] == num) {
       result[selectCol] = ticked;
+      if(ticked){selectCount++;} else {selectCount--;}
+      updateFooter()
+      return;
     }
   }
 }
@@ -447,6 +463,8 @@ function toggleSelect(ticked) {
   for (result of sqlResults.recordset) {
     result[selectCol] = ticked;
   }
+  if(ticked){selectCount = recCount;} else {selectCount = 0;}
+  updateFooter()
 }
 
 function mapResults(mapMode) {
