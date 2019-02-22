@@ -298,6 +298,15 @@ function addExternalData(resultSet) {
         }
       }
     }
+    for(let sort of sortArray){
+      result[sort.sortName] = 0;
+      for (site of sort.values) {
+        if (site.storeNum == storeNum) {
+          result[sort.sortName] = Number(site.value);
+          break;
+        }
+      }
+    }
   }
 }
 
@@ -335,6 +344,10 @@ function drawTableFromSQL() {
     let cell = row.insertCell();
     cell.innerHTML = "<b>" + filter.filterName + "</b>";
   }
+  for(let sort of sortArray){
+    let cell = row.insertCell();
+    cell.innerHTML = "<b>" + sort.sortName + "</b>";
+  }
 
   let cell = row.insertCell();
   cell.innerHTML = '<b>Select</b><input align="left" type="checkbox" name="chkSelect" onclick="toggleSelect(this.checked)">';
@@ -346,7 +359,6 @@ function drawTableFromSQL() {
 
   // Create an empty <thead> element and add it to the table:
   var body = table.createTBody();
-  body.classList = "thead-dark";
 
   recCount = 0;
   selectCount = 0;
@@ -358,6 +370,10 @@ function drawTableFromSQL() {
         badCount ++;
       }
       
+    }
+    for(let sort of sortArray){
+      //check if value is between min and maxval
+      if(result[sort.sortName] < sort.minVal || result[sort.sortName] > sort.maxVal){badCount++;}
     }
     if ( badCount == 0
       // (result[columbusCol] == "TRUE" || !ChkColOnly.checked) &&
@@ -385,6 +401,11 @@ function drawTableFromSQL() {
 
       for(let filter of filterArray){
         var value = result[filter.filterName];
+          let cell = row.insertCell();
+          cell.innerHTML = value;
+      }
+      for(let sort of sortArray){
+        var value = result[sort.sortName];
           let cell = row.insertCell();
           cell.innerHTML = value;
       }
@@ -451,11 +472,19 @@ function buildFilterSection(){
     let fromDiv = document.createElement('div');
     let fromInput = document.createElement('input')
     fromInput.value = sort.minVal;
+    fromInput.name = "MIN"+sort.sortName
+    fromInput.addEventListener("change", () => {
+      sort.minVal= fromInput.value;
+    });
     fromDiv.appendChild(fromInput);
     //to
     let toDiv = document.createElement('div');
     let toInput = document.createElement('input')
     toInput.value = sort.maxVal;
+    toInput.name = "MAX"+sort.sortName
+    toInput.addEventListener("change", () => {
+      sort.maxVal= toInput.value;
+    });
     toDiv.appendChild(toInput);
 
     div.appendChild(titleDiv);

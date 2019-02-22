@@ -142,7 +142,7 @@ function getSorts() {
       let data = allTextLines[i].split(",");
       if (data.length == headers.length) {
         //sort.storeNums.push(data[0].replace(/['"]+/g, ""));
-        sort.values.push({store:data[0].replace(/['"]+/g, ""),value:data[1].replace(/['"]+/g, "")});
+        sort.values.push({storeNum:data[0].replace(/['"]+/g, ""),value:data[1].replace(/['"]+/g, "")});
         sort.maxVal = Math.max(sort.maxVal,data[1].replace(/['"]+/g, ""))
       }
     }
