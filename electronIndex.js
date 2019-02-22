@@ -11,6 +11,7 @@ const {clipboard} = require('electron');
 //clipboard.writeText('Example String');
 
 let filterArray;
+let sortArray;
 
 let jmxUsers = [];
 let currentJMXuser;
@@ -340,6 +341,11 @@ function drawTableFromSQL() {
   // let ChkDSPOnly = document.all.item("ChkDSPOnly");
   // let ChkCHSOnly = document.all.item("ChkCHSOnly");
 
+    // Create an empty <thead> element and add it to the table:
+    var body = table.createTBody();
+    body.classList = "thead-dark";
+  
+
   for (result of sqlResults.recordset) {
     let badCount = 0;
     for(let filter of filterArray){
@@ -354,7 +360,7 @@ function drawTableFromSQL() {
       // (result[DSPCol] == "TRUE" || !ChkDSPOnly.checked) &&
       // (result[CHSCol] == "TRUE" || !ChkCHSOnly.checked)
     ) {
-      let row = table.insertRow();
+      let row = body.insertRow();
       let storenum;
       //console.log(result);
       for(col of columnsToShow) {
@@ -418,6 +424,31 @@ function buildFilterSection(){
     div.textContent = filter.filterName + " Only?"
     div.style="margin-right:5px"
     div.insertBefore(chkBox, div.childNodes[0]);
+    filterDiv.insertBefore(div,filterButtonDiv);
+  }
+  for(let sort of sortArray){
+    let div = document.createElement('div');
+
+    //title
+    let titleDiv = document.createElement('div');
+    titleDiv.textContent = sort.sortName
+    //from
+    let fromDiv = document.createElement('div');
+    let fromInput = document.createElement('input')
+    fromInput.value = sort.minVal;
+    fromDiv.appendChild(fromInput);
+    //to
+    let toDiv = document.createElement('div');
+    let toInput = document.createElement('input')
+    toInput.value = sort.maxVal;
+    toDiv.appendChild(toInput);
+
+    div.appendChild(titleDiv);
+    div.appendChild(fromDiv);
+    div.appendChild(toDiv);
+    
+    div.style="margin-right:5px"
+
     filterDiv.insertBefore(div,filterButtonDiv);
   }
 }
@@ -602,8 +633,9 @@ function toFourDigits(_storeNum) {
   return storeNum;
 }
 
-ipcRenderer.on("initPageContent", function(e,_filterArray) {
+ipcRenderer.on("initPageContent", function(e,_filterArray, _sortArray) {
   filterArray = _filterArray;
+  sortArray = _sortArray;
   initPageContent();
 });
 
