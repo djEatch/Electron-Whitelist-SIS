@@ -379,6 +379,7 @@ function drawTableFromSQL() {
 
   for (result of sqlResults.recordset) {
     let badCount = 0;
+
     for(let filter of filterArray){
       if (filter.checked && result[filter.filterName] != "TRUE"){
         badCount ++;
@@ -395,7 +396,9 @@ function drawTableFromSQL() {
       // (result[DSPCol] == "TRUE" || !ChkDSPOnly.checked) &&
       // (result[CHSCol] == "TRUE" || !ChkCHSOnly.checked)
     ) {
+
       let row = body.insertRow();
+
       recCount++;
       let storenum;
       //console.log(result);
@@ -449,7 +452,6 @@ function drawTableFromSQL() {
   tableDiv.appendChild(table);
 
   updateFooter();
-
 }
 
 function updateFooter(){
