@@ -11,6 +11,7 @@ const {clipboard} = require('electron');
 //clipboard.writeText('Example String');
 
 let filterArray;
+let sortArray;
 
 let jmxUsers = [];
 let currentJMXuser;
@@ -52,6 +53,7 @@ const modalDiv = document.querySelector("#modalDiv");
 
 let recCount = 0;
 let selectCount = 0;
+
 // const fudgeButton = document.querySelector("#fudgeButton");
 // fudgeButton.addEventListener("click", fudgeFunction);
 
@@ -215,9 +217,12 @@ function sortData(field, field2) {
     sortOptions.currentDir = 1;
   }
 
-  serverList.sort(function(a, b) {
-    var x = a[field] == null || !a[field] ? "zzz" : a[field].toLowerCase();
-    var y = b[field] == null || !b[field] ? "zzz" : b[field].toLowerCase();
+  sqlResults.recordset.sort(function(a, b) {
+    //var x = a[field] == null || !a[field] ? "zzz" : a[field];//.toLowerCase();
+    //var y = b[field] == null || !b[field] ? "zzz" : b[field];//.toLowerCase();
+
+    var x = a[field]
+    var y = b[field]
 
     if (x < y) {
       return -1 * sortOptions.currentDir;
@@ -228,9 +233,9 @@ function sortData(field, field2) {
 
     if (x == y && field2) {
       var x2 =
-        a[field2] == null || !a[field2] ? "zzz" : a[field2].toLowerCase();
+        a[field2] == null || !a[field2] ? "zzz" : a[field2];//.toLowerCase();
       var y2 =
-        b[field2] == null || !b[field2] ? "zzz" : b[field2].toLowerCase();
+        b[field2] == null || !b[field2] ? "zzz" : b[field2];//.toLowerCase();
       if (x2 < y2) {
         return -1 * sortOptions.currentDir;
       }
@@ -240,7 +245,8 @@ function sortData(field, field2) {
     }
     return 0;
   });
-  drawMultiTables();
+  //drawMultiTables();
+  drawTableFromSQL()
 }
 
 function onlyUnique(value, index, self) {
@@ -296,6 +302,15 @@ function addExternalData(resultSet) {
         }
       }
     }
+    for(let sort of sortArray){
+      result[sort.sortName] = 0;
+      for (site of sort.values) {
+        if (site.storeNum == storeNum) {
+          result[sort.sortName] = Number(site.value);
+          break;
+        }
+      }
+    }
   }
 }
 
@@ -326,12 +341,26 @@ function drawTableFromSQL() {
     if(element.dbText != selectCol){
       let cell = row.insertCell();
       cell.innerHTML = "<b>" + element.columnTitle + "</b>";
+      cell.setAttribute("data-dbText", element.dbText);
+      cell.addEventListener("click", function() {
+        sortData(cell.getAttribute("data-dbText"),"Property_id");
+      });
     } 
   }
 
   for(let filter of filterArray){
     let cell = row.insertCell();
     cell.innerHTML = "<b>" + filter.filterName + "</b>";
+    cell.addEventListener("click", function() {
+      sortData(filter.filterName,"Property_id");
+    });
+  }
+  for(let sort of sortArray){
+    let cell = row.insertCell();
+    cell.innerHTML = "<b>" + sort.sortName + "</b>";
+    cell.addEventListener("click", function() {
+      sortData(sort.sortName,"Property_id");
+    });
   }
 
   let cell = row.insertCell();
@@ -341,8 +370,13 @@ function drawTableFromSQL() {
   // let ChkResOnly = document.all.item("ChkResOnly");
   // let ChkDSPOnly = document.all.item("ChkDSPOnly");
   // let ChkCHSOnly = document.all.item("ChkCHSOnly");
+
+  // Create an empty <thead> element and add it to the table:
+  var body = table.createTBody();
+
   recCount = 0;
   selectCount = 0;
+
   for (result of sqlResults.recordset) {
     let badCount = 0;
 
@@ -352,13 +386,19 @@ function drawTableFromSQL() {
       }
       
     }
+    for(let sort of sortArray){
+      //check if value is between min and maxval
+      if(result[sort.sortName] < sort.minVal || result[sort.sortName] > sort.maxVal){badCount++;}
+    }
     if ( badCount == 0
       // (result[columbusCol] == "TRUE" || !ChkColOnly.checked) &&
       // (result[resilientCol] == "TRUE" || !ChkResOnly.checked) &&
       // (result[DSPCol] == "TRUE" || !ChkDSPOnly.checked) &&
       // (result[CHSCol] == "TRUE" || !ChkCHSOnly.checked)
     ) {
-      let row = table.insertRow();
+
+      let row = body.insertRow();
+
       recCount++;
       let storenum;
       //console.log(result);
@@ -378,6 +418,11 @@ function drawTableFromSQL() {
 
       for(let filter of filterArray){
         var value = result[filter.filterName];
+          let cell = row.insertCell();
+          cell.innerHTML = value;
+      }
+      for(let sort of sortArray){
+        var value = result[sort.sortName];
           let cell = row.insertCell();
           cell.innerHTML = value;
       }
@@ -431,6 +476,39 @@ function buildFilterSection(){
     div.textContent = filter.filterName + " Only?"
     div.style="margin-right:5px"
     div.insertBefore(chkBox, div.childNodes[0]);
+    filterDiv.insertBefore(div,filterButtonDiv);
+  }
+  for(let sort of sortArray){
+    let div = document.createElement('div');
+
+    //title
+    let titleDiv = document.createElement('div');
+    titleDiv.textContent = sort.sortName
+    //from
+    let fromDiv = document.createElement('div');
+    let fromInput = document.createElement('input')
+    fromInput.value = sort.minVal;
+    fromInput.name = "MIN"+sort.sortName
+    fromInput.addEventListener("change", () => {
+      sort.minVal= fromInput.value;
+    });
+    fromDiv.appendChild(fromInput);
+    //to
+    let toDiv = document.createElement('div');
+    let toInput = document.createElement('input')
+    toInput.value = sort.maxVal;
+    toInput.name = "MAX"+sort.sortName
+    toInput.addEventListener("change", () => {
+      sort.maxVal= toInput.value;
+    });
+    toDiv.appendChild(toInput);
+
+    div.appendChild(titleDiv);
+    div.appendChild(fromDiv);
+    div.appendChild(toDiv);
+    
+    div.style="margin-right:5px"
+
     filterDiv.insertBefore(div,filterButtonDiv);
   }
 }
@@ -620,8 +698,9 @@ function toFourDigits(_storeNum) {
   return storeNum;
 }
 
-ipcRenderer.on("initPageContent", function(e,_filterArray) {
+ipcRenderer.on("initPageContent", function(e,_filterArray, _sortArray) {
   filterArray = _filterArray;
+  sortArray = _sortArray;
   initPageContent();
 });
 

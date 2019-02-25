@@ -12,7 +12,8 @@ let resilientFile = __dirname + "/data/ResilientList.txt";
 let DSPFile = __dirname + "/data/DSPList.txt";
 let CHSFile = __dirname + "/data/CHSList.txt";
 let configFile = __dirname + "/connection.json";
-let filterArray = []
+let filterArray = [];
+let sortArray = [];
 
 global.sqlConfigString = fs.readFileSync(configFile).toString();
 
@@ -46,7 +47,8 @@ app.on("ready", function() {
   win.once("ready-to-show", () => {
     //getMasterLBList();
     getFilters();
-    win.webContents.send("initPageContent",filterArray);
+    getSorts();
+    win.webContents.send("initPageContent",filterArray, sortArray);
     win.show();
   });
 
@@ -56,6 +58,9 @@ app.on("ready", function() {
 
 function endsTXT(filename){
   return (filename.slice(-4).toLowerCase() == ".txt");
+}
+function endsCSV(filename){
+  return (filename.slice(-4).toLowerCase() == ".csv");
 }
 
 class FilterFile {
@@ -69,6 +74,18 @@ class FilterFile {
   
 }
 
+class SortFile {
+  constructor(fileName, location){
+    this.fileName = fileName;
+    this.filePath = location + fileName;
+    this.sortName = fileName.slice(0,-4);
+    this.storeNums = [];
+    this.values = []
+    this.minVal = 0;
+    this.maxVal = 0;
+  }
+  
+}
 
 //ipcMain.on('getFilters',getFilters);
 
@@ -100,6 +117,39 @@ function getFilters() {
   }
 
   console.log(filterArray);
+  //win.webContents.send("setFilters", filterArray);
+}
+
+function getSorts() {
+
+  sortArray = [];
+  let sortLocation = __dirname +'\\data\\'
+  let sortFiles = fs.readdirSync(sortLocation).filter(endsCSV);
+  
+  for (let file of sortFiles){
+    sortArray.push(new SortFile(file,sortLocation));
+  }
+
+  for (let sort of sortArray){
+    let data,allTextLines, headers;
+    data = fs.readFileSync(sort.filePath).toString();
+
+    allTextLines = data.split(/\r\n|\n/);
+    headers = allTextLines[0].split(",");
+
+    for (let i = 1; i < allTextLines.length; i++) {
+      // split content based on comma
+      let data = allTextLines[i].split(",");
+      if (data.length == headers.length) {
+        //sort.storeNums.push(data[0].replace(/['"]+/g, ""));
+        sort.values.push({storeNum:data[0].replace(/['"]+/g, ""),value:data[1].replace(/['"]+/g, "")});
+        sort.maxVal = Math.max(sort.maxVal,data[1].replace(/['"]+/g, ""))
+      }
+    }
+
+  }
+
+  console.log(sortArray);
   //win.webContents.send("setFilters", filterArray);
 }
 
