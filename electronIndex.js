@@ -217,9 +217,12 @@ function sortData(field, field2) {
     sortOptions.currentDir = 1;
   }
 
-  serverList.sort(function(a, b) {
-    var x = a[field] == null || !a[field] ? "zzz" : a[field].toLowerCase();
-    var y = b[field] == null || !b[field] ? "zzz" : b[field].toLowerCase();
+  sqlResults.recordset.sort(function(a, b) {
+    //var x = a[field] == null || !a[field] ? "zzz" : a[field];//.toLowerCase();
+    //var y = b[field] == null || !b[field] ? "zzz" : b[field];//.toLowerCase();
+
+    var x = a[field]
+    var y = b[field]
 
     if (x < y) {
       return -1 * sortOptions.currentDir;
@@ -230,9 +233,9 @@ function sortData(field, field2) {
 
     if (x == y && field2) {
       var x2 =
-        a[field2] == null || !a[field2] ? "zzz" : a[field2].toLowerCase();
+        a[field2] == null || !a[field2] ? "zzz" : a[field2];//.toLowerCase();
       var y2 =
-        b[field2] == null || !b[field2] ? "zzz" : b[field2].toLowerCase();
+        b[field2] == null || !b[field2] ? "zzz" : b[field2];//.toLowerCase();
       if (x2 < y2) {
         return -1 * sortOptions.currentDir;
       }
@@ -242,7 +245,8 @@ function sortData(field, field2) {
     }
     return 0;
   });
-  drawMultiTables();
+  //drawMultiTables();
+  drawTableFromSQL()
 }
 
 function onlyUnique(value, index, self) {
@@ -337,16 +341,26 @@ function drawTableFromSQL() {
     if(element.dbText != selectCol){
       let cell = row.insertCell();
       cell.innerHTML = "<b>" + element.columnTitle + "</b>";
+      cell.setAttribute("data-dbText", element.dbText);
+      cell.addEventListener("click", function() {
+        sortData(cell.getAttribute("data-dbText"),"Property_id");
+      });
     } 
   }
 
   for(let filter of filterArray){
     let cell = row.insertCell();
     cell.innerHTML = "<b>" + filter.filterName + "</b>";
+    cell.addEventListener("click", function() {
+      sortData(filter.filterName,"Property_id");
+    });
   }
   for(let sort of sortArray){
     let cell = row.insertCell();
     cell.innerHTML = "<b>" + sort.sortName + "</b>";
+    cell.addEventListener("click", function() {
+      sortData(sort.sortName,"Property_id");
+    });
   }
 
   let cell = row.insertCell();
