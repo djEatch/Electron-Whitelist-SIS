@@ -590,7 +590,7 @@ function exportResults(exportMode) {
     if (result[selectCol]) {
       let store = toFourDigits(result["Property_id"]);
       result["actioned"] = "TRUE";
-      outputString += store + ",";
+      outputString += store + ";";
     }
   }
   if (outputString.length > 0) {
