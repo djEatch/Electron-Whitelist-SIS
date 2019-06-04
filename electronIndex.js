@@ -55,22 +55,15 @@ const modalDiv = document.querySelector("#modalDiv");
 
 let recCount = 0;
 let selectCount = 0;
+let actionCount = 0;
 
-// const fudgeButton = document.querySelector("#fudgeButton");
-// fudgeButton.addEventListener("click", fudgeFunction);
-
-// const searchButton = document.querySelector("#searchButton");
-// searchButton.addEventListener("click", _ => {
-//   ipcRenderer.send("getFilterLists");
-// });
-
-function search() {
-  let sqlQuery = buildSQLQueryString();
-  getSQLResults(sqlQuery).then(results => {
-    sqlResults = results;
-    addExternalData(sqlResults);
-    drawTableFromSQL();
-  });
+function search() { //called from html
+  // let sqlQuery = buildSQLQueryString();
+  // getSQLResults(sqlQuery).then(results => {
+  //   sqlResults = results;
+  //   addExternalData(sqlResults);
+  //   drawTableFromSQL();
+  // });
 }
 
 let divisionListData;
@@ -83,11 +76,7 @@ let closedListData;
 let masterData;
 
 showSQLLoginModal();
-//getMasterData();
 
-// function fudgeFunction() {
-//   console.log("Clicked");
-// }
 
 function showSQLLoginModal(_envType) {
   let sqlCredModal = document.querySelector("#modalSQLpara");
@@ -100,7 +89,7 @@ function showSQLLoginModal(_envType) {
 function sqlLogin(p) {
   sqlConfig.password = p.value;
   $("#loginModalDiv").modal("hide");
-  getMasterData();
+  getAllData()
 }
 
 function closeApp() {
@@ -108,13 +97,18 @@ function closeApp() {
   win.close();
 }
 
-async function getMasterData() {
+async function getAllData() {
   let pool = await sql.connect(sqlConfig);
   let request = new sql.Request();
   request.multiple = true;
 
   await request.query(
-    "SELECT * from dbo.t_division;SELECT * from dbo.t_region;SELECT * from dbo.t_area;select * from dbo.t_SAG;SELECT distinct [trading_format] FROM dbo.T_PROPERTY;SELECT distinct [property_type] FROM dbo.T_PROPERTY;",
+    "SELECT * from dbo.t_division;SELECT * from dbo.t_region;SELECT * from dbo.t_area;select * from dbo.t_SAG;SELECT distinct [trading_format] FROM dbo.T_PROPERTY;SELECT distinct [property_type] FROM dbo.T_PROPERTY;"
+    + "SELECT p.Property_id, p.property_name, p.division_id, p.region_id, p.customer_area_id,p.format, p.trading_format, p.store_origin, p.property_type, s.SAG  , tsa1.value_text as 'Latitude', tsa2.value_text as 'Longitude'  FROM [Property].[dbo].[T_PROPERTY] p left join [Property].[dbo].[T_SAG] s on p.sq_metres >= s.lower_limit and  p.sq_metres <= s.upper_limit " +
+        "left join t_store_attribute tsa1 on tsa1.store_number = p.property_id and tsa1.attribute_id = 39" +
+        "left join t_store_attribute tsa2 on tsa2.store_number = p.property_id and tsa2.attribute_id = 40" +
+        ";"
+    ,
     (err, result) => {
       if (err) {
         console.log(err);
@@ -137,6 +131,7 @@ async function getMasterData() {
       sagListData = masterData.recordsets[3];
       formatListData = masterData.recordsets[4];
       closedListData = masterData.recordsets[5];
+      sqlResults = masterData.recordsets[6];
 
       for (record of divisionListData) {
         let option = document.createElement("option");
@@ -185,25 +180,11 @@ async function getMasterData() {
         closedDropDown.add(option);
       }
 
-      // console.log(divisionListData);
-      // console.log(regionListData);
-      // console.log(areaListData);
-      // console.log(sagListData);
-      // console.log(formatListData);
+      addExternalData(sqlResults);
+      drawTableFromSQL();
     }
   );
 }
-
-// async function sqlQuery(queryString) {
-//   try {
-//     let pool = await sql.connect(sqlConfig);
-//     let result = await sql.query`${queryString}`; //`SELECT TOP 100 * from dbo.t_division`
-//     await sql.close();
-//     return result.recordset;
-//   } catch (err) {
-//     console.log(err);
-//   }
-// }
 
 function resetSort() {
   sortOptions = { currentField: null, currentDir: -1 };
@@ -218,7 +199,7 @@ function sortData(field, field2) {
     sortOptions.currentDir = 1;
   }
 
-  sqlResults.recordset.sort(function(a, b) {
+  sqlResults.sort(function(a, b) {
     //var x = a[field] == null || !a[field] ? "zzz" : a[field];//.toLowerCase();
     //var y = b[field] == null || !b[field] ? "zzz" : b[field];//.toLowerCase();
 
@@ -252,45 +233,9 @@ function onlyUnique(value, index, self) {
   return self.indexOf(value) === index;
 }
 
-ipcRenderer.on("setFilterLists", function(e, _columbusList, _resilientList, _DSPList, _CHSList) {
-  columbusList = _columbusList;
-  resilientList = _resilientList;
-  DSPList = _DSPList;
-  CHSList = _CHSList;
-  let sqlQuery = buildSQLQueryString();
-  getSQLResults(sqlQuery).then(results => {
-    sqlResults = results;
-    addExternalData(sqlResults);
-    drawTableFromSQL();
-  });
-});
-
-async function getSQLResults(sqlQuery) {
-  let results;
-  sql.close();
-  let pool = await sql.connect(sqlConfig);
-  let request = new sql.Request();
-
-  return await request
-    .query(
-      "SELECT p.Property_id, p.property_name, p.division_id, p.region_id, p.customer_area_id,p.format, p.trading_format, p.store_origin, p.property_type, s.SAG  , tsa1.value_text as 'Latitude', tsa2.value_text as 'Longitude'  FROM [Property].[dbo].[T_PROPERTY] p left join [Property].[dbo].[T_SAG] s on p.sq_metres >= s.lower_limit and  p.sq_metres <= s.upper_limit " +
-        "left join t_store_attribute tsa1 on tsa1.store_number = p.property_id and tsa1.attribute_id = 39" +
-        "left join t_store_attribute tsa2 on tsa2.store_number = p.property_id and tsa2.attribute_id = 40" +
-        sqlQuery +
-        ";"
-    )
-    .then(result => {
-      return result;
-    });
-
-  // console.log(results);
-
-  // return results;
-}
-
 function addExternalData(resultSet) {
-  console.log(resultSet);
-  for (result of resultSet.recordset) {
+  //console.log(resultSet);
+  for (result of resultSet) {
     let storeNum = toFourDigits(result["Property_id"]);
     result["actioned"] = false;
     for (let filter of filterArray) {
@@ -316,7 +261,7 @@ function addExternalData(resultSet) {
 
 function drawTableFromSQL() {
   //filterButton
-  console.log(sqlResults);
+  //console.log(sqlResults);
   let table = document.createElement("table");
   table.classList = "table table-light table-hover";
 
@@ -333,7 +278,7 @@ function drawTableFromSQL() {
   if (!sqlResults) {
     return;
   }
-  if (sqlResults.recordset.length < 1) {
+  if (sqlResults.length < 1) {
     return;
   }
 
@@ -367,11 +312,9 @@ function drawTableFromSQL() {
   cell.innerHTML = '<b>Select</b><input align="left" type="checkbox" name="chkSelect" onclick="toggleSelect(this.checked)">';
   let cell2 = row.insertCell();
   cell2.innerHTML = '<b>Actioned</b>';
-
-  // let ChkColOnly = document.all.item("ChkColOnly");
-  // let ChkResOnly = document.all.item("ChkResOnly");
-  // let ChkDSPOnly = document.all.item("ChkDSPOnly");
-  // let ChkCHSOnly = document.all.item("ChkCHSOnly");
+  cell2.addEventListener("click", function() {
+    sortData("actioned", "Property_id");
+  });
 
   // Create an empty <thead> element and add it to the table:
   var body = table.createTBody();
@@ -379,27 +322,10 @@ function drawTableFromSQL() {
   recCount = 0;
   selectCount = 0;
 
-  for (result of sqlResults.recordset) {
-    let badCount = 0;
-
-    for (let filter of filterArray) {
-      if (filter.checked && result[filter.filterName] != "TRUE") {
-        badCount++;
-      }
-    }
-    for (let sort of sortArray) {
-      //check if value is between min and maxval
-      if (result[sort.sortName] < sort.minVal || result[sort.sortName] > sort.maxVal) {
-        badCount++;
-      }
-    }
-    if (
-      badCount == 0
-      // (result[columbusCol] == "TRUE" || !ChkColOnly.checked) &&
-      // (result[resilientCol] == "TRUE" || !ChkResOnly.checked) &&
-      // (result[DSPCol] == "TRUE" || !ChkDSPOnly.checked) &&
-      // (result[CHSCol] == "TRUE" || !ChkCHSOnly.checked)
-    ) {
+  for (result of sqlResults) {
+  
+    if (includeRow(result))
+    {
       let row = body.insertRow();
 
       recCount++;
@@ -444,17 +370,16 @@ function drawTableFromSQL() {
       } else {
         chk.checked = false;
       }
-      if (chk.checked) {
-        selectCount++;
-      }
+      
       cell.appendChild(chk);
 
       //---------------------------------------------
       let actionCell = row.insertCell();
-      //actionCell.innerHTML = isActioned(toFourDigits(storenum));
       actionCell.innerHTML = result["actioned"];
       //=============================================
       row.className = "table-info";
+    } else {
+      result[selectCol] = false;
     }
   }
 
@@ -465,24 +390,84 @@ function drawTableFromSQL() {
   updateFooter();
 }
 
-function updateFooter() {
-  let refreshDiv = document.getElementById("refreshDiv");
-  refreshDiv.textContent = recCount + " record(s), " + selectCount + " selected. (" + actionedArray.length + ") actioned.";
-}
+function includeRow(rowData){
 
-function isActioned(_storenum) {
-  for (let entry of actionedArray) {
-    if (entry == _storenum) {
-      return true;
+  for (let filter of filterArray) {
+    if (filter.checked && rowData[filter.filterName] != "TRUE") {
+      return false;
     }
   }
-  return false;
+  for (let sort of sortArray) {
+    //check if value is between min and maxval
+    if (rowData[sort.sortName] < sort.minVal || rowData[sort.sortName] > sort.maxVal) {
+      return false;
+    }
+  }
+
+  let ChkDivision = document.all.item("ChkDivision");
+  let ChkRegion = document.all.item("ChkRegion");
+  let ChkArea = document.all.item("ChkArea");
+  let ChkFormat = document.all.item("ChkFormat");
+  let ChkClosed = document.all.item("ChkClosed");
+  let ChkSAG = document.all.item("ChkSAG");
+
+  if (ChkDivision.checked) {
+    let divisionValue = document.all.item("DivisionList").value; //10 // text is "14-London";
+    if(rowData["division_id"] != divisionValue ) {return false};
+  }
+
+  if (ChkRegion.checked) {
+    let regionValue = document.all.item("RegionList").value; //"10-Airports";
+    if(rowData["region_id"] != regionValue ) {return false};
+  }
+
+  if (ChkArea.checked) {
+    let areaValue = document.all.item("CAList").value; //"311-Heathrow%20Airport";
+    if(rowData["customer_area_id"] != areaValue ) {return false};
+  }
+
+  if (ChkFormat.checked) {
+    let formatValue = document.all.item("FormatList").value;
+    if(rowData["trading_format"] != formatValue ) {return false};
+  }
+
+  if (ChkClosed.checked) {
+    let closedOptions = document.all.item("ClosedList").options;
+    for (let item of closedOptions) {
+      if (item.selected) {
+        if(rowData["property_type"] == item.value ) {return false};
+      }
+    }
+  }
+
+  if (ChkSAG.checked) {
+    let sagValue = document.all.item("SAGList").value;
+    if(!rowData["SAG"] || rowData["SAG"].substring(0,1) != sagValue ) {return false};
+  }
+
+  return true;
+}
+
+function updateFooter() {
+  let refreshDiv = document.getElementById("refreshDiv");
+  selectCount = 0
+  actionCount = 0
+  for (result of sqlResults) {
+    if(result[selectCol] == true){
+      selectCount ++;
+    }
+    if(result["actioned"] == true){
+      actionCount ++;
+    }
+  }
+
+  refreshDiv.textContent = recCount + " record(s), " + selectCount + " selected. (" + actionCount + ") actioned.";
 }
 
 function buildFilterSection() {
   let filterDiv = document.getElementById("filterDiv");
   let filterButtonDiv = document.getElementById("filterButtonDiv");
-  console.log(filterArray);
+  //console.log(filterArray);
   for (let filter of filterArray) {
     let div = document.createElement("div");
     let chkBox = document.createElement("input");
@@ -542,7 +527,7 @@ function selectFilter(fName, ticked) {
 }
 
 function selectStore(num, ticked) {
-  for (result of sqlResults.recordset) {
+  for (result of sqlResults) {
     if (result["Property_id"] == num) {
       result[selectCol] = ticked;
       if (ticked) {
@@ -557,12 +542,12 @@ function selectStore(num, ticked) {
 }
 
 function toggleSelect(ticked) {
-  console.log(ticked);
+  //console.log(ticked);
   checkboxes = document.getElementsByName("chkGroup");
   for (var checkbox of checkboxes) {
     checkbox.checked = ticked;
   }
-  for (result of sqlResults.recordset) {
+  for (result of sqlResults) {
     result[selectCol] = ticked;
   }
   if (ticked) {
@@ -594,14 +579,10 @@ function mapResults(mapMode) {
 
 function exportResults(exportMode) {
   let outputString = "";
-  for (result of sqlResults.recordset) {
+  for (result of sqlResults) {
     if (result[selectCol]) {
       let store = toFourDigits(result["Property_id"]);
       result["actioned"] = true;
-      // if (!isActioned(store)) {
-      //   actionedArray.push(store);
-        
-      // }
       outputString += store + ",";
     }
   }
@@ -645,79 +626,6 @@ function exportResults(exportMode) {
     drawTableFromSQL();
   }
   console.log(outputString);
-}
-
-function buildSQLQueryString() {
-  //ipcRenderer.send("getFilterLists");
-  let queryString = "";
-
-  let ChkDivision = document.all.item("ChkDivision");
-  let ChkRegion = document.all.item("ChkRegion");
-  let ChkArea = document.all.item("ChkArea");
-  let ChkFormat = document.all.item("ChkFormat");
-  let ChkClosed = document.all.item("ChkClosed");
-  let ChkSAG = document.all.item("ChkSAG");
-
-  if (ChkDivision.checked || ChkRegion.checked || ChkArea.checked || ChkFormat.checked || ChkClosed.checked || ChkSAG.checked) {
-    queryString += " WHERE ";
-  }
-
-  if (ChkDivision.checked) {
-    let divisionValue = document.all.item("DivisionList").value; //10 //."14-London";
-    if (queryString.substr(-7) != " WHERE ") {
-      queryString += " AND ";
-    }
-    queryString += ` DIVISION_ID = '${divisionValue}' `;
-  }
-
-  if (ChkRegion.checked) {
-    let regionValue = document.all.item("RegionList").value; //"10-Airports";
-    if (queryString.substr(-7) != " WHERE ") {
-      queryString += " AND ";
-    }
-    queryString += ` REGION_ID = '${regionValue}' `;
-  }
-
-  if (ChkArea.checked) {
-    let areaValue = document.all.item("CAList").value; //"311-Heathrow%20Airport";
-    if (queryString.substr(-7) != " WHERE ") {
-      queryString += " AND ";
-    }
-    queryString += ` CUSTOMER_AREA_ID = '${areaValue}' `;
-  }
-
-  if (ChkFormat.checked) {
-    let formatValue = document.all.item("FormatList").value;
-    if (queryString.substr(-7) != " WHERE ") {
-      queryString += " AND ";
-    }
-    queryString += ` TRADING_FORMAT = '${formatValue}' `;
-  }
-
-  if (ChkClosed.checked) {
-    let closedOptions = document.all.item("ClosedList").options;
-    let closedValues = [];
-    for (let item of closedOptions) {
-      if (item.selected) {
-        closedValues.push("'" + item.value + "'");
-      }
-    }
-    if (queryString.substr(-7) != " WHERE ") {
-      queryString += " AND ";
-    }
-    queryString += ` PROPERTY_TYPE NOT IN (${closedValues}) `;
-  }
-
-  if (ChkSAG.checked) {
-    let sagValue = document.all.item("SAGList").value;
-    if (queryString.substr(-7) != " WHERE ") {
-      queryString += " AND ";
-    }
-    queryString += ` left(SAG,1) = '${sagValue}' `;
-  }
-
-  console.log(queryString);
-  return queryString;
 }
 
 function toFourDigits(_storeNum) {
