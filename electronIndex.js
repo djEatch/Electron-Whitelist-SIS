@@ -5,13 +5,14 @@ var $ = require("jquery");
 const sql = require("mssql");
 
 const sqlConfig = JSON.parse(electron.remote.getGlobal("sqlConfigString"));
-const remote = require('electron').remote
+const remote = require("electron").remote;
 
-const {clipboard} = require('electron');
+const { clipboard } = require("electron");
 //clipboard.writeText('Example String');
 
 let filterArray;
 let sortArray;
+let actionedArray = [];
 
 let jmxUsers = [];
 let currentJMXuser;
@@ -28,23 +29,24 @@ let CHSCol = "CHS";
 let selectCol = "user_selected";
 let sqlResults;
 const columnsToShow = [
-  {dbText:"Property_id",columnTitle:"S.No"},
-  {dbText:"property_name",columnTitle:"Name"},
-  {dbText:"division_id",columnTitle:"Div"},
-  {dbText:"region_id",columnTitle:"Reg"},	
-  {dbText:"customer_area_id",columnTitle:"Area"},
-  {dbText:"format",columnTitle:"Format"},
-  {dbText:"trading_format",columnTitle:"T.Format"},
-  {dbText:"store_origin",columnTitle:"Origin"},
-  {dbText:"property_type",columnTitle:"Type"},
-  {dbText:"SAG",columnTitle:"SAG"},
+  { dbText: "Property_id", columnTitle: "S.No" },
+  { dbText: "property_name", columnTitle: "Name" },
+  { dbText: "division_id", columnTitle: "Div" },
+  { dbText: "region_id", columnTitle: "Reg" },
+  { dbText: "customer_area_id", columnTitle: "Area" },
+  { dbText: "format", columnTitle: "Format" },
+  { dbText: "trading_format", columnTitle: "T.Format" },
+  { dbText: "store_origin", columnTitle: "Origin" },
+  { dbText: "property_type", columnTitle: "Type" },
+  { dbText: "SAG", columnTitle: "SAG" },
   //"Latitude",
   //"Longitude",
   // columbusCol,
-  // resilientCol,	
+  // resilientCol,
   // DSPCol,
   // CHSCol,
-  {dbText:selectCol,columnTitle:"Select"}
+  { dbText: selectCol, columnTitle: "Select" },
+  { dbText: "actioned", columnTitle: "Actioned" }
 ];
 
 let sortOptions = { currentField: null, currentDir: -1 };
@@ -62,7 +64,7 @@ let selectCount = 0;
 //   ipcRenderer.send("getFilterLists");
 // });
 
-function search(){
+function search() {
   let sqlQuery = buildSQLQueryString();
   getSQLResults(sqlQuery).then(results => {
     sqlResults = results;
@@ -89,8 +91,7 @@ showSQLLoginModal();
 
 function showSQLLoginModal(_envType) {
   let sqlCredModal = document.querySelector("#modalSQLpara");
-  sqlCredModal.innerHTML =
-    "Enter SQL password details for the " + sqlConfig.user + " account.";
+  sqlCredModal.innerHTML = "Enter SQL password details for the " + sqlConfig.user + " account.";
   //let sqlCredModalSubmitBtn = document.querySelector("#btnSetSQLcredentials");
   //sqlCredModalSubmitBtn.setAttribute("data-lbUserEnvType", _envType);
   $("#loginModalDiv").modal("show");
@@ -102,9 +103,9 @@ function sqlLogin(p) {
   getMasterData();
 }
 
-function closeApp(){
-  let win = remote.getCurrentWindow()
-  win.close()
+function closeApp() {
+  let win = remote.getCurrentWindow();
+  win.close();
 }
 
 async function getMasterData() {
@@ -221,8 +222,8 @@ function sortData(field, field2) {
     //var x = a[field] == null || !a[field] ? "zzz" : a[field];//.toLowerCase();
     //var y = b[field] == null || !b[field] ? "zzz" : b[field];//.toLowerCase();
 
-    var x = a[field]
-    var y = b[field]
+    var x = a[field];
+    var y = b[field];
 
     if (x < y) {
       return -1 * sortOptions.currentDir;
@@ -232,10 +233,8 @@ function sortData(field, field2) {
     }
 
     if (x == y && field2) {
-      var x2 =
-        a[field2] == null || !a[field2] ? "zzz" : a[field2];//.toLowerCase();
-      var y2 =
-        b[field2] == null || !b[field2] ? "zzz" : b[field2];//.toLowerCase();
+      var x2 = a[field2] == null || !a[field2] ? "zzz" : a[field2]; //.toLowerCase();
+      var y2 = b[field2] == null || !b[field2] ? "zzz" : b[field2]; //.toLowerCase();
       if (x2 < y2) {
         return -1 * sortOptions.currentDir;
       }
@@ -246,7 +245,7 @@ function sortData(field, field2) {
     return 0;
   });
   //drawMultiTables();
-  drawTableFromSQL()
+  drawTableFromSQL();
 }
 
 function onlyUnique(value, index, self) {
@@ -293,7 +292,7 @@ function addExternalData(resultSet) {
   console.log(resultSet);
   for (result of resultSet.recordset) {
     let storeNum = toFourDigits(result["Property_id"]);
-    for(let filter of filterArray){
+    for (let filter of filterArray) {
       result[filter.filterName] = "FALSE";
       for (site of filter.storeNums) {
         if (site == storeNum) {
@@ -302,7 +301,7 @@ function addExternalData(resultSet) {
         }
       }
     }
-    for(let sort of sortArray){
+    for (let sort of sortArray) {
       result[sort.sortName] = 0;
       for (site of sort.values) {
         if (site.storeNum == storeNum) {
@@ -338,33 +337,35 @@ function drawTableFromSQL() {
   }
 
   for (element of columnsToShow) {
-    if(element.dbText != selectCol){
+    if (element.dbText != selectCol && element.dbText != "actioned") {
       let cell = row.insertCell();
       cell.innerHTML = "<b>" + element.columnTitle + "</b>";
       cell.setAttribute("data-dbText", element.dbText);
       cell.addEventListener("click", function() {
-        sortData(cell.getAttribute("data-dbText"),"Property_id");
+        sortData(cell.getAttribute("data-dbText"), "Property_id");
       });
-    } 
+    }
   }
 
-  for(let filter of filterArray){
+  for (let filter of filterArray) {
     let cell = row.insertCell();
     cell.innerHTML = "<b>" + filter.filterName + "</b>";
     cell.addEventListener("click", function() {
-      sortData(filter.filterName,"Property_id");
+      sortData(filter.filterName, "Property_id");
     });
   }
-  for(let sort of sortArray){
+  for (let sort of sortArray) {
     let cell = row.insertCell();
     cell.innerHTML = "<b>" + sort.sortName + "</b>";
     cell.addEventListener("click", function() {
-      sortData(sort.sortName,"Property_id");
+      sortData(sort.sortName, "Property_id");
     });
   }
 
   let cell = row.insertCell();
   cell.innerHTML = '<b>Select</b><input align="left" type="checkbox" name="chkSelect" onclick="toggleSelect(this.checked)">';
+  let cell2 = row.insertCell();
+  cell2.innerHTML = '<b>Actioned</b>';
 
   // let ChkColOnly = document.all.item("ChkColOnly");
   // let ChkResOnly = document.all.item("ChkResOnly");
@@ -380,30 +381,31 @@ function drawTableFromSQL() {
   for (result of sqlResults.recordset) {
     let badCount = 0;
 
-    for(let filter of filterArray){
-      if (filter.checked && result[filter.filterName] != "TRUE"){
-        badCount ++;
+    for (let filter of filterArray) {
+      if (filter.checked && result[filter.filterName] != "TRUE") {
+        badCount++;
       }
-      
     }
-    for(let sort of sortArray){
+    for (let sort of sortArray) {
       //check if value is between min and maxval
-      if(result[sort.sortName] < sort.minVal || result[sort.sortName] > sort.maxVal){badCount++;}
+      if (result[sort.sortName] < sort.minVal || result[sort.sortName] > sort.maxVal) {
+        badCount++;
+      }
     }
-    if ( badCount == 0
+    if (
+      badCount == 0
       // (result[columbusCol] == "TRUE" || !ChkColOnly.checked) &&
       // (result[resilientCol] == "TRUE" || !ChkResOnly.checked) &&
       // (result[DSPCol] == "TRUE" || !ChkDSPOnly.checked) &&
       // (result[CHSCol] == "TRUE" || !ChkCHSOnly.checked)
     ) {
-
       let row = body.insertRow();
 
       recCount++;
       let storenum;
       //console.log(result);
-      for(col of columnsToShow) {
-        if (col.dbText != selectCol) {
+      for (col of columnsToShow) {
+        if (col.dbText != selectCol && col.dbText != "actioned") {
           var value = result[col.dbText];
           let cell = row.insertCell();
           cell.innerHTML = value;
@@ -416,15 +418,15 @@ function drawTableFromSQL() {
         }
       }
 
-      for(let filter of filterArray){
+      for (let filter of filterArray) {
         var value = result[filter.filterName];
-          let cell = row.insertCell();
-          cell.innerHTML = value;
+        let cell = row.insertCell();
+        cell.innerHTML = value;
       }
-      for(let sort of sortArray){
+      for (let sort of sortArray) {
         var value = result[sort.sortName];
-          let cell = row.insertCell();
-          cell.innerHTML = value;
+        let cell = row.insertCell();
+        cell.innerHTML = value;
       }
 
       let cell = row.insertCell();
@@ -441,8 +443,15 @@ function drawTableFromSQL() {
       } else {
         chk.checked = false;
       }
-      if(chk.checked){selectCount++;}
+      if (chk.checked) {
+        selectCount++;
+      }
       cell.appendChild(chk);
+
+      //---------------------------------------------
+      let actionCell = row.insertCell();
+      actionCell.innerHTML = isActioned(toFourDigits(storenum));
+      //=============================================
       row.className = "table-info";
     }
   }
@@ -454,68 +463,77 @@ function drawTableFromSQL() {
   updateFooter();
 }
 
-function updateFooter(){
+function updateFooter() {
   let refreshDiv = document.getElementById("refreshDiv");
-  refreshDiv.textContent = recCount + " record(s), " + selectCount + " selected.";
+  refreshDiv.textContent = recCount + " record(s), " + selectCount + " selected. (" + actionedArray.length + ") actioned.";
 }
 
-function buildFilterSection(){
+function isActioned(_storenum) {
+  for (let entry of actionedArray) {
+    if (entry == _storenum) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function buildFilterSection() {
   let filterDiv = document.getElementById("filterDiv");
-  let filterButtonDiv= document.getElementById("filterButtonDiv");
-  console.log (filterArray);
-  for(let filter of filterArray){
-    let div = document.createElement('div');
-    let chkBox = document.createElement('input')
-    chkBox.align = "left"
-    chkBox.type = "checkbox"
-    chkBox.name = "CHK"+filter.filterName;
+  let filterButtonDiv = document.getElementById("filterButtonDiv");
+  console.log(filterArray);
+  for (let filter of filterArray) {
+    let div = document.createElement("div");
+    let chkBox = document.createElement("input");
+    chkBox.align = "left";
+    chkBox.type = "checkbox";
+    chkBox.name = "CHK" + filter.filterName;
     chkBox.checked = filter.checked;
     chkBox.addEventListener("click", () => {
       selectFilter(filter.filterName, chkBox.checked);
     });
-    div.textContent = filter.filterName + " Only?"
-    div.style="margin-right:5px"
+    div.textContent = filter.filterName + " Only?";
+    div.style = "margin-right:5px";
     div.insertBefore(chkBox, div.childNodes[0]);
-    filterDiv.insertBefore(div,filterButtonDiv);
+    filterDiv.insertBefore(div, filterButtonDiv);
   }
-  for(let sort of sortArray){
-    let div = document.createElement('div');
+  for (let sort of sortArray) {
+    let div = document.createElement("div");
 
     //title
-    let titleDiv = document.createElement('div');
-    titleDiv.textContent = sort.sortName
+    let titleDiv = document.createElement("div");
+    titleDiv.textContent = sort.sortName;
     //from
-    let fromDiv = document.createElement('div');
-    let fromInput = document.createElement('input')
+    let fromDiv = document.createElement("div");
+    let fromInput = document.createElement("input");
     fromInput.value = sort.minVal;
-    fromInput.name = "MIN"+sort.sortName
+    fromInput.name = "MIN" + sort.sortName;
     fromInput.addEventListener("change", () => {
-      sort.minVal= fromInput.value;
+      sort.minVal = fromInput.value;
     });
     fromDiv.appendChild(fromInput);
     //to
-    let toDiv = document.createElement('div');
-    let toInput = document.createElement('input')
+    let toDiv = document.createElement("div");
+    let toInput = document.createElement("input");
     toInput.value = sort.maxVal;
-    toInput.name = "MAX"+sort.sortName
+    toInput.name = "MAX" + sort.sortName;
     toInput.addEventListener("change", () => {
-      sort.maxVal= toInput.value;
+      sort.maxVal = toInput.value;
     });
     toDiv.appendChild(toInput);
 
     div.appendChild(titleDiv);
     div.appendChild(fromDiv);
     div.appendChild(toDiv);
-    
-    div.style="margin-right:5px"
 
-    filterDiv.insertBefore(div,filterButtonDiv);
+    div.style = "margin-right:5px";
+
+    filterDiv.insertBefore(div, filterButtonDiv);
   }
 }
 
-function selectFilter(fName,ticked){
-  for(let filter of filterArray){
-    if(filter.filterName == fName){
+function selectFilter(fName, ticked) {
+  for (let filter of filterArray) {
+    if (filter.filterName == fName) {
       filter.checked = ticked;
     }
   }
@@ -525,8 +543,12 @@ function selectStore(num, ticked) {
   for (result of sqlResults.recordset) {
     if (result["Property_id"] == num) {
       result[selectCol] = ticked;
-      if(ticked){selectCount++;} else {selectCount--;}
-      updateFooter()
+      if (ticked) {
+        selectCount++;
+      } else {
+        selectCount--;
+      }
+      updateFooter();
       return;
     }
   }
@@ -541,8 +563,12 @@ function toggleSelect(ticked) {
   for (result of sqlResults.recordset) {
     result[selectCol] = ticked;
   }
-  if(ticked){selectCount = recCount;} else {selectCount = 0;}
-  updateFooter()
+  if (ticked) {
+    selectCount = recCount;
+  } else {
+    selectCount = 0;
+  }
+  updateFooter();
 }
 
 function mapResults(mapMode) {
@@ -564,50 +590,55 @@ function mapResults(mapMode) {
   ipcRenderer.send("spawnMap", sqlResults, mapMode, filterArray);
 }
 
-function exportResults(exportMode){
+function exportResults(exportMode) {
   let outputString = "";
-  for (result of sqlResults.recordset){
-    if(result[selectCol]){
-    outputString += toFourDigits(result["Property_id"]) + ",";
+  for (result of sqlResults.recordset) {
+    if (result[selectCol]) {
+      let store = toFourDigits(result["Property_id"]);
+      if (!isActioned(store)) {
+        actionedArray.push(store);
+      }
+      outputString += store + ",";
     }
   }
-  if(outputString.length > 0){
-    outputString = outputString.slice(0,-1)
+  if (outputString.length > 0) {
+    outputString = outputString.slice(0, -1);
 
-    switch(exportMode){
-      case 'CLIP': {
+    switch (exportMode) {
+      case "CLIP": {
         clipboard.writeText(outputString);
         break;
       }
-      case 'SCREEN': {
-        ipcRenderer.send("showResultsWindow", outputString)
+      case "SCREEN": {
+        ipcRenderer.send("showResultsWindow", outputString);
         break;
       }
-      case 'FILE':{
-        let outputFilename = "storelist.csv"
-        var file = new Blob([outputString], {type: "text"});
-        if (window.navigator.msSaveOrOpenBlob) // IE10+
-            window.navigator.msSaveOrOpenBlob(file, outputFilename);
-        else { // Others
-            var a = document.createElement("a"),
-                    url = URL.createObjectURL(file);
-            a.href = url;
-            a.download = outputFilename;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(function() {
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);  
-            }, 0); 
+      case "FILE": {
+        let outputFilename = "storelist.csv";
+        var file = new Blob([outputString], { type: "text" });
+        if (window.navigator.msSaveOrOpenBlob)
+          // IE10+
+          window.navigator.msSaveOrOpenBlob(file, outputFilename);
+        else {
+          // Others
+          var a = document.createElement("a"),
+            url = URL.createObjectURL(file);
+          a.href = url;
+          a.download = outputFilename;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function() {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          }, 0);
         }
         break;
       }
-      default:{
+      default: {
         break;
       }
     }
-
-
+    drawTableFromSQL();
   }
   console.log(outputString);
 }
@@ -623,14 +654,7 @@ function buildSQLQueryString() {
   let ChkClosed = document.all.item("ChkClosed");
   let ChkSAG = document.all.item("ChkSAG");
 
-  if (
-    ChkDivision.checked ||
-    ChkRegion.checked ||
-    ChkArea.checked ||
-    ChkFormat.checked ||
-    ChkClosed.checked ||
-    ChkSAG.checked
-  ) {
+  if (ChkDivision.checked || ChkRegion.checked || ChkArea.checked || ChkFormat.checked || ChkClosed.checked || ChkSAG.checked) {
     queryString += " WHERE ";
   }
 
@@ -698,7 +722,7 @@ function toFourDigits(_storeNum) {
   return storeNum;
 }
 
-ipcRenderer.on("initPageContent", function(e,_filterArray, _sortArray) {
+ipcRenderer.on("initPageContent", function(e, _filterArray, _sortArray) {
   filterArray = _filterArray;
   sortArray = _sortArray;
   initPageContent();
