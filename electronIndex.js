@@ -292,6 +292,7 @@ function addExternalData(resultSet) {
   console.log(resultSet);
   for (result of resultSet.recordset) {
     let storeNum = toFourDigits(result["Property_id"]);
+    result["actioned"] = false;
     for (let filter of filterArray) {
       result[filter.filterName] = "FALSE";
       for (site of filter.storeNums) {
@@ -450,7 +451,8 @@ function drawTableFromSQL() {
 
       //---------------------------------------------
       let actionCell = row.insertCell();
-      actionCell.innerHTML = isActioned(toFourDigits(storenum));
+      //actionCell.innerHTML = isActioned(toFourDigits(storenum));
+      actionCell.innerHTML = result["actioned"];
       //=============================================
       row.className = "table-info";
     }
@@ -595,9 +597,11 @@ function exportResults(exportMode) {
   for (result of sqlResults.recordset) {
     if (result[selectCol]) {
       let store = toFourDigits(result["Property_id"]);
-      if (!isActioned(store)) {
-        actionedArray.push(store);
-      }
+      result["actioned"] = true;
+      // if (!isActioned(store)) {
+      //   actionedArray.push(store);
+        
+      // }
       outputString += store + ",";
     }
   }
