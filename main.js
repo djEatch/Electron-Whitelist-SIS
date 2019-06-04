@@ -116,6 +116,7 @@ function getFilters() {
 
   }
 
+  filterArray.push( new FilterFile("actioned    ","actioned"))
   console.log(filterArray);
   //win.webContents.send("setFilters", filterArray);
 }

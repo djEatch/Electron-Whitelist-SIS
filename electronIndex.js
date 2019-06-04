@@ -237,7 +237,7 @@ function addExternalData(resultSet) {
   //console.log(resultSet);
   for (result of resultSet) {
     let storeNum = toFourDigits(result["Property_id"]);
-    result["actioned"] = false;
+    //result["actioned"] = false;
     for (let filter of filterArray) {
       result[filter.filterName] = "FALSE";
       for (site of filter.storeNums) {
@@ -310,11 +310,11 @@ function drawTableFromSQL() {
 
   let cell = row.insertCell();
   cell.innerHTML = '<b>Select</b><input align="left" type="checkbox" name="chkSelect" onclick="toggleSelect(this.checked)">';
-  let cell2 = row.insertCell();
-  cell2.innerHTML = '<b>Actioned</b>';
-  cell2.addEventListener("click", function() {
-    sortData("actioned", "Property_id");
-  });
+  // let cell2 = row.insertCell();
+  // cell2.innerHTML = '<b>Actioned</b>';
+  // cell2.addEventListener("click", function() {
+  //   sortData("actioned", "Property_id");
+  // });
 
   // Create an empty <thead> element and add it to the table:
   var body = table.createTBody();
@@ -374,8 +374,8 @@ function drawTableFromSQL() {
       cell.appendChild(chk);
 
       //---------------------------------------------
-      let actionCell = row.insertCell();
-      actionCell.innerHTML = result["actioned"];
+      // let actionCell = row.insertCell();
+      // actionCell.innerHTML = result["actioned"];
       //=============================================
       row.className = "table-info";
     } else {
@@ -393,7 +393,10 @@ function drawTableFromSQL() {
 function includeRow(rowData){
 
   for (let filter of filterArray) {
-    if (filter.checked && rowData[filter.filterName] != "TRUE") {
+    if (filter.checked && filter.filterName != "actioned" && rowData[filter.filterName] != "TRUE") {
+      return false;
+    }
+    if (filter.checked && filter.filterName == "actioned" && rowData[filter.filterName] == "TRUE") {
       return false;
     }
   }
@@ -456,7 +459,7 @@ function updateFooter() {
     if(result[selectCol] == true){
       selectCount ++;
     }
-    if(result["actioned"] == true){
+    if(result["actioned"] == "TRUE"){
       actionCount ++;
     }
   }
@@ -478,7 +481,11 @@ function buildFilterSection() {
     chkBox.addEventListener("click", () => {
       selectFilter(filter.filterName, chkBox.checked);
     });
-    div.textContent = filter.filterName + " Only?";
+    if(filter.filterName == "actioned"){
+      div.textContent = "Excl. " + filter.filterName + "?";
+    }else{
+      div.textContent = filter.filterName + " Only?";
+    }
     div.style = "margin-right:5px";
     div.insertBefore(chkBox, div.childNodes[0]);
     filterDiv.insertBefore(div, filterButtonDiv);
@@ -582,7 +589,7 @@ function exportResults(exportMode) {
   for (result of sqlResults) {
     if (result[selectCol]) {
       let store = toFourDigits(result["Property_id"]);
-      result["actioned"] = true;
+      result["actioned"] = "TRUE";
       outputString += store + ",";
     }
   }
