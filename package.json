@@ -18,7 +18,7 @@
   "author": "DJEatch",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^2.0.6"
+    "electron": "^9.4.0"
   },
   "dependencies": {
     "bootstrap": "^4.1.3",
